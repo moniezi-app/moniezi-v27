@@ -1,0 +1,8 @@
+MONIEZI v27.0.1
+
+Implemented a strict style transfer from the Tax Prep Package design language to the Profit & Loss PDF.
+- Removed the dark dashboard-style P&L cover
+- Rebuilt P&L pages on the same light editorial grid as Tax Prep
+- Matched the MONIEZI eyebrow, title hierarchy, pale metadata cards, KPI cards, section cards, and footer treatment
+- Reorganized P&L into a 4-page report family aligned with Tax Prep
+- Preserved accountant-grade table content while keeping the Tax Prep visual system
