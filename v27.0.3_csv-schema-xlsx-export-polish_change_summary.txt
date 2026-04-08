@@ -1,0 +1,6 @@
+v27.0.3
+- kept CSV exports raw and machine-friendly while refining headers/formatting
+- changed tax ledger CSV headers to entry_type / description / amount_usd / receipt_id
+- changed mileage CSV headers to rate_usd / deduction_usd and standardized ISO-style dates
+- added polished XLSX exports for Tax Ledger and Mileage with MONIEZI title, metadata, frozen headers, widths, and review-friendly formatting
+- added spreadsheet export buttons to Mileage and Tax Prep Package sections

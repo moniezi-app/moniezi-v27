@@ -136,14 +136,21 @@ const fetchDemoReceiptBlob = async (asset: { assetUrl: string; mimeType: string 
 };
 
 
-const formatDateForUsCsv = (value: string) => {
+const formatDateForExport = (value: string) => {
+  if (!value) return '';
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-  });
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const formatDecimalForExport = (value: number | string, digits = 2) => {
+  const n = Number(value ?? 0);
+  if (!Number.isFinite(n)) return '';
+  return n.toFixed(digits);
 };
 
 const normalize = (s: string) => (s || '').trim().toLowerCase();
@@ -264,7 +271,13 @@ const escapeCsv = (value: any) => {
 
 const makeCsvBlob = (rows: any[][]) => {
   const lines = rows.map(r => r.map(escapeCsv).join(',')).join('\n');
-  return new Blob([lines], { type: 'text/csv;charset=utf-8' });
+  return new Blob(['\ufeff', lines], { type: 'text/csv;charset=utf-8' });
+};
+
+const makeSpreadsheetBlob = (buffer: ArrayBuffer) => {
+  return new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
 };
 
 // --- Utility: Minimal ZIP (stored / no compression) ---
@@ -4372,32 +4385,289 @@ const demoMileageTrips: MileageTrip[] = [
     return mileageTrips.filter(t => new Date(t.date).getFullYear() === taxPrepYear);
   }, [mileageTrips, taxPrepYear]);
 
+  const getTaxLedgerExportRows = () => {
+    return txForTaxYear
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(t => [
+        formatDateForExport(t.date),
+        t.type,
+        t.name,
+        t.category,
+        Number(t.amount || 0),
+        t.notes || '',
+        (t as any).receiptId || '',
+      ]);
+  };
+
+  const getMileageExportRows = () => {
+    const rateUsd = Number(settings.mileageRateCents ?? 72.5) / 100;
+    return mileageForTaxYear
+      .slice()
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(t => {
+        const miles = Number(t.miles || 0);
+        const deduction = miles * rateUsd;
+        return [
+          formatDateForExport(t.date),
+          miles,
+          rateUsd,
+          deduction,
+          t.purpose,
+          t.client || '',
+          t.notes || '',
+        ];
+      });
+  };
+
+  const buildStyledSpreadsheetBuffer = async ({
+    sheetName,
+    title,
+    subtitle,
+    fileLabel,
+    columns,
+    rows,
+    currencyColumns = [],
+    decimalColumns = [],
+  }: {
+    sheetName: string;
+    title: string;
+    subtitle: string;
+    fileLabel: string;
+    columns: { header: string; key: string; width: number }[];
+    rows: any[][];
+    currencyColumns?: string[];
+    decimalColumns?: string[];
+  }) => {
+    const ExcelJS = await import('exceljs');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'MONIEZI';
+    workbook.company = 'MONIEZI';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+    workbook.title = title;
+    workbook.subject = fileLabel;
+
+    const worksheet = workbook.addWorksheet(sheetName, {
+      views: [{ state: 'frozen', ySplit: 6, showGridLines: false }],
+    });
+
+    const endColumnLetter = (() => {
+      let index = columns.length;
+      let result = '';
+      while (index > 0) {
+        const remainder = (index - 1) % 26;
+        result = String.fromCharCode(65 + remainder) + result;
+        index = Math.floor((index - 1) / 26);
+      }
+      return result;
+    })();
+
+    const brandBlue = 'FF2563EB';
+    const slate900 = 'FF0F172A';
+    const slate700 = 'FF334155';
+    const slate500 = 'FF64748B';
+    const slate200 = 'FFE2E8F0';
+    const slate100 = 'FFF8FAFC';
+    const cardFill = 'FFF8FAFC';
+
+    worksheet.columns = columns.map(column => ({ key: column.key, width: column.width }));
+
+    worksheet.mergeCells(`A1:${endColumnLetter}1`);
+    worksheet.getCell('A1').value = title;
+    worksheet.getCell('A1').font = { name: 'Aptos', size: 18, bold: true, color: { argb: slate900 } };
+    worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+    worksheet.getRow(1).height = 28;
+
+    worksheet.mergeCells(`A2:${endColumnLetter}2`);
+    worksheet.getCell('A2').value = subtitle;
+    worksheet.getCell('A2').font = { name: 'Aptos', size: 11, color: { argb: slate700 } };
+    worksheet.getCell('A2').alignment = { wrapText: true };
+    worksheet.getRow(2).height = 22;
+
+    worksheet.mergeCells('A4:B4');
+    worksheet.getCell('A4').value = 'MONIEZI Pro Finance';
+    worksheet.getCell('A4').font = { name: 'Aptos', size: 10, bold: true, color: { argb: brandBlue } };
+    worksheet.getCell('A4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
+    worksheet.getCell('A4').border = {
+      top: { style: 'thin', color: { argb: slate200 } },
+      left: { style: 'thin', color: { argb: slate200 } },
+      bottom: { style: 'thin', color: { argb: slate200 } },
+      right: { style: 'thin', color: { argb: slate200 } },
+    };
+
+    worksheet.mergeCells('C4:E4');
+    worksheet.getCell('C4').value = `Tax Year ${taxPrepYear}`;
+    worksheet.getCell('C4').font = { name: 'Aptos', size: 10, bold: true, color: { argb: slate900 } };
+    worksheet.getCell('C4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
+    worksheet.getCell('C4').border = {
+      top: { style: 'thin', color: { argb: slate200 } },
+      left: { style: 'thin', color: { argb: slate200 } },
+      bottom: { style: 'thin', color: { argb: slate200 } },
+      right: { style: 'thin', color: { argb: slate200 } },
+    };
+
+    worksheet.mergeCells(`F4:${endColumnLetter}4`);
+    worksheet.getCell('F4').value = `Generated ${new Date().toLocaleString()}`;
+    worksheet.getCell('F4').font = { name: 'Aptos', size: 10, color: { argb: slate700 } };
+    worksheet.getCell('F4').alignment = { horizontal: 'right' };
+    worksheet.getCell('F4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
+    worksheet.getCell('F4').border = {
+      top: { style: 'thin', color: { argb: slate200 } },
+      left: { style: 'thin', color: { argb: slate200 } },
+      bottom: { style: 'thin', color: { argb: slate200 } },
+      right: { style: 'thin', color: { argb: slate200 } },
+    };
+
+    const headerRowNumber = 6;
+    const headerRow = worksheet.getRow(headerRowNumber);
+    columns.forEach((column, index) => {
+      const cell = headerRow.getCell(index + 1);
+      cell.value = column.header;
+      cell.font = { name: 'Aptos', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slate900 } };
+      cell.alignment = { vertical: 'middle', horizontal: 'left' };
+      cell.border = {
+        top: { style: 'thin', color: { argb: slate900 } },
+        bottom: { style: 'thin', color: { argb: slate900 } },
+      };
+    });
+    headerRow.height = 22;
+    worksheet.autoFilter = {
+      from: { row: headerRowNumber, column: 1 },
+      to: { row: headerRowNumber, column: columns.length },
+    };
+
+    rows.forEach((rowValues, rowIndex) => {
+      const row = worksheet.addRow(rowValues);
+      row.height = 20;
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: 'Aptos', size: 10, color: { argb: slate900 } };
+        cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: slate200 } },
+        };
+        if (rowIndex % 2 === 1) {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slate100 } };
+        }
+
+        const columnKey = columns[colNumber - 1]?.key;
+        if (currencyColumns.includes(columnKey) && typeof cell.value === 'number') {
+          cell.numFmt = '$#,##0.00';
+          cell.font = { name: 'Aptos', size: 10, color: { argb: slate900 } };
+          cell.alignment = { vertical: 'top', horizontal: 'right' };
+        } else if (decimalColumns.includes(columnKey) && typeof cell.value === 'number') {
+          cell.numFmt = '0.0';
+          cell.alignment = { vertical: 'top', horizontal: 'right' };
+        }
+      });
+    });
+
+    columns.forEach((column, index) => {
+      if (currencyColumns.includes(column.key)) {
+        worksheet.getColumn(index + 1).alignment = { horizontal: 'right' };
+      }
+    });
+
+    const footerRowNumber = worksheet.rowCount + 2;
+    worksheet.mergeCells(`A${footerRowNumber}:${endColumnLetter}${footerRowNumber}`);
+    const footerCell = worksheet.getCell(`A${footerRowNumber}`);
+    footerCell.value = `${fileLabel} • Local raw-data export from MONIEZI. Use CSV for imports and XLSX for human-readable review.`;
+    footerCell.font = { name: 'Aptos', size: 9, color: { argb: slate500 }, italic: true };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return buffer as ArrayBuffer;
+  };
+
   const handleExportTaxLedgerCSV = () => {
     const rows: any[][] = [
-      ['date', 'type', 'name', 'category', 'amount', 'notes', 'receiptId'],
-      ...txForTaxYear
-        .slice()
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map(t => [formatDateForUsCsv(t.date), t.type, t.name, t.category, t.amount, t.notes || '', (t as any).receiptId || ''])
+      ['date', 'entry_type', 'description', 'category', 'amount_usd', 'notes', 'receipt_id'],
+      ...getTaxLedgerExportRows().map(row => [
+        row[0],
+        row[1],
+        row[2],
+        row[3],
+        formatDecimalForExport(row[4]),
+        row[5],
+        row[6],
+      ]),
     ];
     downloadBlob(makeCsvBlob(rows), `MONIEZI_TaxLedger_${taxPrepYear}.csv`);
     showToast(`Exported Tax Ledger CSV for ${taxPrepYear}`, 'success');
   };
 
+  const handleExportTaxLedgerSpreadsheet = async () => {
+    try {
+      const rows = getTaxLedgerExportRows();
+      const buffer = await buildStyledSpreadsheetBuffer({
+        sheetName: 'Tax Ledger',
+        title: 'MONIEZI Tax Ledger Export',
+        subtitle: 'Polished spreadsheet view of your yearly ledger export. Use CSV for direct import workflows and XLSX for review, filtering, and handoff.',
+        fileLabel: `Tax Ledger ${taxPrepYear}`,
+        columns: [
+          { header: 'Date', key: 'date', width: 14 },
+          { header: 'Entry Type', key: 'entry_type', width: 14 },
+          { header: 'Description', key: 'description', width: 30 },
+          { header: 'Category', key: 'category', width: 24 },
+          { header: 'Amount (USD)', key: 'amount_usd', width: 16 },
+          { header: 'Notes', key: 'notes', width: 34 },
+          { header: 'Receipt ID', key: 'receipt_id', width: 18 },
+        ],
+        rows,
+        currencyColumns: ['amount_usd'],
+      });
+      downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_TaxLedger_${taxPrepYear}.xlsx`);
+      showToast(`Exported Tax Ledger spreadsheet for ${taxPrepYear}`, 'success');
+    } catch (error) {
+      console.error('Tax Ledger spreadsheet export failed', error);
+      showToast('Tax Ledger spreadsheet export failed', 'error');
+    }
+  };
+
   const handleExportMileageCSV = () => {
-    const rateCents = Number(settings.mileageRateCents ?? 72.5);
     const rows: any[][] = [
-      ['date', 'miles', 'rate_cents_per_mile', 'deduction', 'purpose', 'client', 'notes'],
-      ...mileageForTaxYear
-        .slice()
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .map(t => {
-          const deduction = (Number(t.miles) * (rateCents / 100));
-          return [formatDateForUsCsv(t.date), t.miles, rateCents, deduction.toFixed(2), t.purpose, t.client || '', t.notes || ''];
-        })
+      ['date', 'miles', 'rate_usd', 'deduction_usd', 'purpose', 'client', 'notes'],
+      ...getMileageExportRows().map(row => [
+        row[0],
+        formatDecimalForExport(row[1], 1),
+        formatDecimalForExport(row[2]),
+        formatDecimalForExport(row[3]),
+        row[4],
+        row[5],
+        row[6],
+      ]),
     ];
     downloadBlob(makeCsvBlob(rows), `MONIEZI_Mileage_${taxPrepYear}.csv`);
     showToast(`Exported Mileage CSV for ${taxPrepYear}`, 'success');
+  };
+
+  const handleExportMileageSpreadsheet = async () => {
+    try {
+      const rows = getMileageExportRows();
+      const buffer = await buildStyledSpreadsheetBuffer({
+        sheetName: 'Mileage',
+        title: 'MONIEZI Mileage Export',
+        subtitle: 'Polished spreadsheet view of your business mileage log. Use CSV for raw data workflows and XLSX for review or accountant handoff.',
+        fileLabel: `Mileage ${taxPrepYear}`,
+        columns: [
+          { header: 'Date', key: 'date', width: 14 },
+          { header: 'Miles', key: 'miles', width: 12 },
+          { header: 'Rate (USD)', key: 'rate_usd', width: 12 },
+          { header: 'Deduction (USD)', key: 'deduction_usd', width: 16 },
+          { header: 'Purpose', key: 'purpose', width: 28 },
+          { header: 'Client', key: 'client', width: 24 },
+          { header: 'Notes', key: 'notes', width: 34 },
+        ],
+        rows,
+        currencyColumns: ['rate_usd', 'deduction_usd'],
+        decimalColumns: ['miles'],
+      });
+      downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_Mileage_${taxPrepYear}.xlsx`);
+      showToast(`Exported Mileage spreadsheet for ${taxPrepYear}`, 'success');
+    } catch (error) {
+      console.error('Mileage spreadsheet export failed', error);
+      showToast('Mileage spreadsheet export failed', 'error');
+    }
   };
 
   const handleExportReceiptsZip = async () => {
@@ -5961,7 +6231,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                             <div className="text-xs text-slate-400 flex items-center gap-2">{viewingReceipt.date} <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">Exports to Downloads</span></div>
                         </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <button onClick={() => { handleDownloadReceipt(viewingReceipt.id); }} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><Download size={24} /></button>
                         <button onClick={closeReceipt} className="p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"><X size={24} /></button>
                     </div>
@@ -7277,13 +7547,14 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Mileage</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export a clean CSV for your accountant.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export clean CSV or polished spreadsheet files for your accountant.</p>
                 </div>
                 <div className="flex gap-2">
                   <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
                     {[2026, 2025, 2024, 2023].map(y => (<option key={y} value={y}>{y}</option>))}
                   </select>
                   <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
+                  <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
                 </div>
               </div>
 
@@ -7659,7 +7930,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Tax Ledger CSV</button>
+                    <button onClick={handleExportTaxLedgerSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Tax Ledger Spreadsheet</button>
                     <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
+                    <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
                     <button onClick={handleExportReceiptsZip} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Linked Receipts ZIP</button>
                     <button onClick={handleShareTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Share Tax Summary PDF</button>
                     <button onClick={handleDownloadTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all md:col-span-2">Download Tax Summary PDF</button>
