@@ -1,0 +1,10 @@
+MONIEZI v27.0.2
+
+Base source: revised from the uploaded v27.0.1 package.
+
+Included in this version:
+- Profit & Loss user flow no longer relies on the mobile HTML preview
+- Profit & Loss card uses direct Share PDF / Download PDF actions
+- Page-based Profit & Loss PDF generator retained from the latest approved fix
+- Version number aligned to 27.0.2 for GitHub/repo consistency
+- Service worker cache version bumped for clean refresh

@@ -735,3 +735,512 @@ export async function generateTaxSummaryPdfBytes(data: TaxSummaryPdfData): Promi
 
   return pdfDoc.save();
 }
+
+export interface ProfitLossPdfCategoryRow {
+  name: string;
+  amount: number;
+  sharePct: number;
+}
+
+export interface ProfitLossPdfOtherRow {
+  name: string;
+  amount: number;
+}
+
+export interface ProfitLossPdfData {
+  businessName: string;
+  ownerName: string;
+  generatedAtLabel: string;
+  reportingPeriodLabel: string;
+  periodLabel: string;
+  accountingBasisLabel: string;
+  grossSales: number;
+  refunds: number;
+  netRevenue: number;
+  cogs: number;
+  grossProfit: number;
+  totalOpex: number;
+  operatingIncome: number;
+  otherIncome: number;
+  otherExpenses: number;
+  netOtherIncome: number;
+  netIncome: number;
+  grossMarginPct: number;
+  operatingExpenseRatioPct: number;
+  operatingMarginPct: number;
+  netMarginPct: number;
+  transactionCount: number;
+  expenseCategoryCount: number;
+  topExpenseCategoryName: string;
+  topExpenseCategoryAmount: number;
+  topExpenseCategorySharePct: number;
+  revenueRows: ProfitLossPdfCategoryRow[];
+  cogsRows: ProfitLossPdfCategoryRow[];
+  expenseRows: ProfitLossPdfCategoryRow[];
+  otherIncomeRows: ProfitLossPdfOtherRow[];
+  statementChecks: string[];
+  currencySymbol: string;
+}
+
+type DetailRowTone = 'default' | 'positive' | 'negative' | 'neutral';
+
+type DetailRow = {
+  label: string;
+  note?: string;
+  value: string;
+  tone?: DetailRowTone;
+};
+
+type TableRow = {
+  label: string;
+  amount: string;
+  share?: string;
+  tone?: DetailRowTone;
+  highlight?: boolean;
+  bold?: boolean;
+};
+
+const formatAccountingCurrency = (symbol: string, value: number) => {
+  const absText = formatCurrency(symbol, Math.abs(Number(value) || 0));
+  return value < 0 ? `(${absText})` : absText;
+};
+
+const getToneColor = (tone: DetailRowTone | undefined) => {
+  if (tone === 'positive') return COLORS.green;
+  if (tone === 'negative') return COLORS.red;
+  return COLORS.ink;
+};
+
+const getToneFill = (tone: DetailRowTone | undefined) => {
+  if (tone === 'positive') return COLORS.greenSoft;
+  if (tone === 'negative') return COLORS.redSoft;
+  if (tone === 'neutral') return COLORS.panelStrong;
+  return COLORS.white;
+};
+
+const drawReportPageTitle = (
+  page: PDFPage,
+  kicker: string,
+  title: string,
+  subtitle: string,
+  fonts: FontSet,
+  options: TitleOptions = {},
+) => {
+  const topY = PAGE.height - PAGE.marginTop;
+  page.drawText(sanitizePdfText(kicker), {
+    x: PAGE.marginX,
+    y: topY,
+    size: 10.8,
+    font: fonts.kicker,
+    color: COLORS.blue,
+    characterSpacing: 1.1,
+  });
+
+  const titleSize = options.titleSize ?? 26;
+  const titleWidth = options.titleWidth ?? CONTENT_WIDTH;
+  const titleLines = splitLines(title, fonts.bold, titleSize, titleWidth).slice(0, options.maxTitleLines ?? 2);
+  const titleLineGap = Math.max(6, titleSize * 0.22);
+  let titleY = topY - 56;
+  titleLines.forEach(line => {
+    page.drawText(sanitizePdfText(line), {
+      x: PAGE.marginX,
+      y: titleY,
+      size: titleSize,
+      font: fonts.bold,
+      color: COLORS.ink,
+    });
+    titleY -= titleSize + titleLineGap;
+  });
+
+  const subtitleTop = titleY + 6;
+  return drawTextBlock(page, subtitle, PAGE.marginX, subtitleTop, titleWidth, fonts.body, 8.9, COLORS.inkSoft, 3.5);
+};
+
+const measureDetailRowsCardHeight = (rows: DetailRow[], fonts: FontSet, width: number) => {
+  const bodyWidth = width - SECTION_INSET * 2 - 140;
+  return rows.reduce((sum, row) => {
+    const labelHeight = textBlockHeight(row.label, fonts.bold, 11.4, bodyWidth, 3.2);
+    const noteHeight = row.note ? textBlockHeight(row.note, fonts.body, 7.4, bodyWidth, 2.4) : 0;
+    return sum + Math.max(42, 14 + labelHeight + (noteHeight ? noteHeight + 8 : 0));
+  }, 0) + SECTION_HEADER_HEIGHT + 12;
+};
+
+const drawDetailRowsCard = (
+  page: PDFPage,
+  x: number,
+  yTop: number,
+  width: number,
+  sectionNo: string,
+  title: string,
+  subtitle: string,
+  rows: DetailRow[],
+  fonts: FontSet,
+) => {
+  const cardHeight = measureDetailRowsCardHeight(rows, fonts, width);
+  const bodyTop = drawSectionCard(page, x, yTop, width, cardHeight, sectionNo, title, subtitle, fonts);
+  const bodyWidth = width - SECTION_INSET * 2 - 140;
+  let cursorY = bodyTop;
+
+  rows.forEach((row, index) => {
+    const labelLines = splitLines(row.label, fonts.bold, 11.4, bodyWidth);
+    const noteLines = row.note ? splitLines(row.note, fonts.body, 7.4, bodyWidth) : [];
+    const rowHeight = Math.max(42, 14 + labelLines.length * 11.4 + Math.max(0, labelLines.length - 1) * 3.2 + (noteLines.length ? noteLines.length * 7.4 + Math.max(0, noteLines.length - 1) * 2.4 + 8 : 0));
+
+    if (index > 0) {
+      page.drawLine({
+        start: { x: x + SECTION_INSET, y: cursorY },
+        end: { x: x + width - SECTION_INSET, y: cursorY },
+        thickness: 1,
+        color: COLORS.line,
+      });
+    }
+
+    let lineY = cursorY - 18;
+    labelLines.forEach(line => {
+      page.drawText(sanitizePdfText(line), {
+        x: x + SECTION_INSET,
+        y: lineY,
+        size: 11.4,
+        font: fonts.bold,
+        color: COLORS.ink,
+      });
+      lineY -= 14.6;
+    });
+
+    if (noteLines.length) {
+      lineY -= 2;
+      noteLines.forEach(line => {
+        page.drawText(sanitizePdfText(line), {
+          x: x + SECTION_INSET,
+          y: lineY,
+          size: 7.4,
+          font: fonts.body,
+          color: COLORS.inkSoft,
+        });
+        lineY -= 9.8;
+      });
+    }
+
+    const valueText = sanitizePdfText(row.value);
+    const valueSize = row.value.length > 14 ? 12.6 : 14.2;
+    const valueWidth = fonts.bold.widthOfTextAtSize(valueText, valueSize);
+    page.drawText(valueText, {
+      x: x + width - SECTION_INSET - valueWidth,
+      y: cursorY - 22,
+      size: valueSize,
+      font: fonts.bold,
+      color: getToneColor(row.tone),
+    });
+
+    cursorY -= rowHeight;
+  });
+};
+
+const measureTableRowsHeight = (rows: TableRow[], fonts: FontSet, labelWidth: number) => rows.reduce((sum, row) => {
+  const labelLines = splitLines(row.label, row.bold ? fonts.bold : fonts.body, 10.4, labelWidth - 12);
+  return sum + Math.max(28, 14 + labelLines.length * 10.4 + Math.max(0, labelLines.length - 1) * 3);
+}, 0);
+
+const drawTableRows = (
+  page: PDFPage,
+  x: number,
+  yTop: number,
+  width: number,
+  rows: TableRow[],
+  fonts: FontSet,
+  columns: { labelWidth: number; amountWidth: number; shareWidth: number },
+) => {
+  let cursorY = yTop;
+  rows.forEach((row, index) => {
+    const labelLines = splitLines(row.label, row.bold ? fonts.bold : fonts.body, 10.4, columns.labelWidth - 12);
+    const rowHeight = Math.max(28, 14 + labelLines.length * 10.4 + Math.max(0, labelLines.length - 1) * 3);
+    const fill = row.highlight ? getToneFill(row.tone) : null;
+
+    if (fill) {
+      page.drawRectangle({ x, y: cursorY - rowHeight, width, height: rowHeight, color: fill });
+    }
+    if (index > 0) {
+      page.drawLine({ start: { x, y: cursorY }, end: { x: x + width, y: cursorY }, thickness: 1, color: COLORS.line });
+    }
+
+    let lineY = cursorY - 18;
+    labelLines.forEach(line => {
+      page.drawText(sanitizePdfText(line), {
+        x: x + 10,
+        y: lineY,
+        size: 10.4,
+        font: row.bold ? fonts.bold : fonts.body,
+        color: row.highlight ? getToneColor(row.tone) : COLORS.ink,
+      });
+      lineY -= 13.4;
+    });
+
+    const amountText = sanitizePdfText(row.amount);
+    const amountFont = row.bold || row.highlight ? fonts.bold : fonts.body;
+    const amountSize = row.bold || row.highlight ? 10.8 : 10.4;
+    const amountWidth = amountFont.widthOfTextAtSize(amountText, amountSize);
+    page.drawText(amountText, {
+      x: x + columns.labelWidth + columns.amountWidth - 10 - amountWidth,
+      y: cursorY - 18,
+      size: amountSize,
+      font: amountFont,
+      color: row.highlight ? getToneColor(row.tone) : COLORS.ink,
+    });
+
+    if (columns.shareWidth > 0) {
+      const shareText = sanitizePdfText(row.share || '');
+      const shareFont = row.bold || row.highlight ? fonts.bold : fonts.body;
+      const shareSize = row.bold || row.highlight ? 10.2 : 9.8;
+      const shareWidth = shareFont.widthOfTextAtSize(shareText, shareSize);
+      page.drawText(shareText, {
+        x: x + columns.labelWidth + columns.amountWidth + columns.shareWidth - 10 - shareWidth,
+        y: cursorY - 18,
+        size: shareSize,
+        font: shareFont,
+        color: row.highlight ? getToneColor(row.tone) : COLORS.ink,
+      });
+    }
+
+    cursorY -= rowHeight;
+  });
+  return cursorY;
+};
+
+export async function generateProfitLossPdfBytes(data: ProfitLossPdfData): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+
+  let fonts: FontSet;
+  try {
+    const [reportRegularOtf, reportBoldOtf, appRegularOtf] = await Promise.all([
+      getEmbeddedReportRegularOtf(),
+      getEmbeddedReportBoldOtf(),
+      getEmbeddedAppRegularOtf(),
+    ]);
+    fonts = {
+      body: await pdfDoc.embedFont(reportRegularOtf, { subset: false }),
+      bold: await pdfDoc.embedFont(reportBoldOtf, { subset: false }),
+      kicker: await pdfDoc.embedFont(appRegularOtf, { subset: false }),
+    };
+  } catch (error) {
+    console.warn('Profit & Loss PDF custom fonts unavailable; falling back to standard PDF fonts.', error);
+    fonts = {
+      body: await pdfDoc.embedFont(StandardFonts.Helvetica),
+      bold: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+      kicker: await pdfDoc.embedFont(StandardFonts.HelveticaBold),
+    };
+  }
+
+  const pages = [
+    pdfDoc.addPage([PAGE.width, PAGE.height]),
+    pdfDoc.addPage([PAGE.width, PAGE.height]),
+    pdfDoc.addPage([PAGE.width, PAGE.height]),
+    pdfDoc.addPage([PAGE.width, PAGE.height]),
+  ];
+  const [page1, page2, page3, page4] = pages;
+  const businessName = sanitizePdfText(data.businessName || 'Business');
+  const preparedBy = sanitizePdfText(data.ownerName || 'Prepared privately');
+  const revenueRows = data.revenueRows.length ? data.revenueRows : [{ name: 'No revenue recorded', amount: 0, sharePct: 0 }];
+  const cogsRows = data.cogsRows.length ? data.cogsRows : [{ name: 'Direct costs / COGS', amount: data.cogs || 0, sharePct: data.netRevenue > 0 ? (data.cogs / data.netRevenue) * 100 : 0 }];
+  const expenseRows = data.expenseRows.length ? data.expenseRows : [{ name: 'No operating expenses recorded', amount: 0, sharePct: 0 }];
+  const otherRows = data.otherIncomeRows.length ? data.otherIncomeRows : [{ name: 'No other income / expense recorded', amount: 0 }];
+
+  // PAGE 1
+  let y = drawReportPageTitle(
+    page1,
+    'MONIEZI PROFIT & LOSS',
+    'Profit & Loss Statement',
+    'A concise management statement summarizing revenue, direct costs, operating expenses, and net income from your local MONIEZI records.',
+    fonts,
+    { titleSize: 24, maxTitleLines: 2 },
+  );
+
+  y = drawInfoBoxRow(
+    page1,
+    y - 8,
+    [
+      { label: 'Business', value: businessName, width: 162, height: 50 },
+      { label: 'Reporting period', value: data.reportingPeriodLabel, width: 162, height: 50 },
+      { label: 'Accounting basis', value: data.accountingBasisLabel, width: 167, height: 50 },
+    ],
+    fonts,
+  );
+
+  const metricWidth = (CONTENT_WIDTH - 36) / 4;
+  const metricHeight = 72;
+  drawMiniStat(page1, PAGE.marginX, y, metricWidth, 'Net revenue', formatAccountingCurrency(data.currencySymbol, data.netRevenue), 'Gross sales less returns and refunds.', fonts, metricHeight);
+  drawMiniStat(page1, PAGE.marginX + metricWidth + 12, y, metricWidth, 'Gross profit', formatAccountingCurrency(data.currencySymbol, data.grossProfit), `After direct costs. Margin ${formatPercent(data.grossMarginPct)}.`, fonts, metricHeight);
+  drawMiniStat(page1, PAGE.marginX + (metricWidth + 12) * 2, y, metricWidth, 'Operating expenses', formatAccountingCurrency(data.currencySymbol, data.totalOpex), `${formatPercent(data.operatingExpenseRatioPct)} of net revenue.`, fonts, metricHeight);
+  drawMiniStat(page1, PAGE.marginX + (metricWidth + 12) * 3, y, metricWidth, 'Net income', formatAccountingCurrency(data.currencySymbol, data.netIncome), `Net margin ${formatPercent(data.netMarginPct)}.`, fonts, metricHeight);
+  y -= metricHeight + 18;
+
+  drawDetailRowsCard(page1, PAGE.marginX, y, CONTENT_WIDTH, '1', 'Financial Snapshot & Statement Scope', 'Core figures, reporting basis, and statement metadata typically reviewed before deeper accounting work begins.', [
+    { label: 'Total gross sales', note: 'Recorded income categories before refunds for the selected reporting period.', value: formatAccountingCurrency(data.currencySymbol, data.grossSales) },
+    { label: 'Returns & refunds', note: 'Contra-revenue items netted against gross sales in this statement.', value: formatAccountingCurrency(data.currencySymbol, -Math.abs(data.refunds)), tone: 'negative' },
+    { label: 'Net revenue', note: 'Gross sales less recorded refunds.', value: formatAccountingCurrency(data.currencySymbol, data.netRevenue), tone: 'positive' },
+    { label: 'Direct costs / COGS', note: 'Costs recorded as materials, shipping, subcontractors, processing, or other direct inputs.', value: formatAccountingCurrency(data.currencySymbol, data.cogs) },
+    { label: 'Total operating expenses', note: 'Operating expenses recorded after excluding direct costs and refunds.', value: formatAccountingCurrency(data.currencySymbol, data.totalOpex), tone: 'negative' },
+    { label: 'Net income', note: `Operating result after ${formatNumber(data.transactionCount)} transactions across ${formatNumber(data.expenseCategoryCount)} expense categories.`, value: formatAccountingCurrency(data.currencySymbol, data.netIncome), tone: 'positive' },
+  ], fonts);
+
+  drawFooter(page1, 'MONIEZI Pro Finance | Generated privately from your local business records.', `${businessName} | P&L | ${data.periodLabel}`, fonts, 'Page 1 of 4');
+
+  // PAGE 2
+  y = drawReportPageTitle(
+    page2,
+    'MONIEZI PROFIT & LOSS',
+    'Revenue & Gross Profit',
+    'Top revenue categories, refunds, direct costs, and resulting gross profit for the selected reporting period.',
+    fonts,
+    { titleSize: 23, maxTitleLines: 2 },
+  );
+  const statWidth = (CONTENT_WIDTH - 24) / 3;
+  const statHeight = 74;
+  drawMiniStat(page2, PAGE.marginX, y, statWidth, 'Gross sales', formatAccountingCurrency(data.currencySymbol, data.grossSales), 'Before refunds and returns.', fonts, statHeight);
+  drawMiniStat(page2, PAGE.marginX + statWidth + 12, y, statWidth, 'Returns & refunds', formatAccountingCurrency(data.currencySymbol, -Math.abs(data.refunds)), 'Netted against gross sales.', fonts, statHeight);
+  drawMiniStat(page2, PAGE.marginX + (statWidth + 12) * 2, y, statWidth, 'Gross margin', formatPercent(data.grossMarginPct), 'Gross profit as a percentage of net revenue.', fonts, statHeight);
+  y -= statHeight + 18;
+
+  const labelWidthP2 = 250;
+  const amountWidthP2 = 128;
+  const shareWidthP2 = CONTENT_WIDTH - labelWidthP2 - amountWidthP2;
+  const revenueTableRows: TableRow[] = [
+    ...revenueRows.map(row => ({ label: row.name, amount: formatAccountingCurrency(data.currencySymbol, row.amount), share: formatPercent(row.sharePct) })),
+    { label: 'Total gross sales', amount: formatAccountingCurrency(data.currencySymbol, data.grossSales), share: formatPercent(data.netRevenue > 0 ? (data.grossSales / data.netRevenue) * 100 : 0), bold: true },
+    { label: 'Less: Returns & refunds', amount: formatAccountingCurrency(data.currencySymbol, -Math.abs(data.refunds)), share: data.refunds > 0 && data.netRevenue > 0 ? formatPercent((data.refunds / data.netRevenue) * 100) : '', tone: 'negative', highlight: true, bold: true },
+    { label: 'Net revenue', amount: formatAccountingCurrency(data.currencySymbol, data.netRevenue), share: data.netRevenue > 0 ? formatPercent(100) : '', tone: 'positive', highlight: true, bold: true },
+    ...cogsRows.map(row => ({ label: row.name, amount: formatAccountingCurrency(data.currencySymbol, row.amount), share: formatPercent(row.sharePct) })),
+    { label: 'Total direct costs', amount: formatAccountingCurrency(data.currencySymbol, data.cogs), share: formatPercent(data.netRevenue > 0 ? (data.cogs / data.netRevenue) * 100 : 0), bold: true },
+    { label: 'Gross profit', amount: formatAccountingCurrency(data.currencySymbol, data.grossProfit), share: formatPercent(data.grossMarginPct), tone: 'neutral', highlight: true, bold: true },
+  ];
+  const revenueCardHeight = SECTION_HEADER_HEIGHT + TABLE_HEADER_HEIGHT + measureTableRowsHeight(revenueTableRows, fonts, labelWidthP2) + 20;
+  const revenueBodyTop = drawSectionCard(page2, PAGE.marginX, y, CONTENT_WIDTH, revenueCardHeight, '2', 'Revenue & Gross Profit Detail', 'Sales categories, refunds, direct costs, and the resulting gross profit position.', fonts);
+  page2.drawRectangle({ x: PAGE.marginX, y: revenueBodyTop - TABLE_HEADER_HEIGHT, width: CONTENT_WIDTH, height: TABLE_HEADER_HEIGHT, color: COLORS.panel });
+  page2.drawText('ACCOUNT', { x: PAGE.marginX + 10, y: revenueBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 1.0 });
+  const amountLabel = 'AMOUNT';
+  const amountLabelWidth = fonts.bold.widthOfTextAtSize(amountLabel, 7.8);
+  page2.drawText(amountLabel, { x: PAGE.marginX + labelWidthP2 + amountWidthP2 - 10 - amountLabelWidth, y: revenueBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 0.6 });
+  const shareLabel = '% REV';
+  const shareLabelWidth = fonts.bold.widthOfTextAtSize(shareLabel, 7.8);
+  page2.drawText(shareLabel, { x: PAGE.marginX + labelWidthP2 + amountWidthP2 + shareWidthP2 - 10 - shareLabelWidth, y: revenueBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 0.6 });
+  drawTableRows(page2, PAGE.marginX, revenueBodyTop - TABLE_HEADER_HEIGHT, CONTENT_WIDTH, revenueTableRows, fonts, { labelWidth: labelWidthP2, amountWidth: amountWidthP2, shareWidth: shareWidthP2 });
+  const takeawayTop = y - revenueCardHeight - 18;
+  const takeawayText = 'This page summarizes how much gross sales were recorded, how much revenue was reduced by refunds, what direct costs were captured, and the resulting gross profit for the selected reporting window.';
+  const takeawayHeight = 34 + textBlockHeight(takeawayText, fonts.body, 9.2, CONTENT_WIDTH - 36, 4.1) + 18;
+  page2.drawRectangle({ x: PAGE.marginX, y: takeawayTop - takeawayHeight, width: CONTENT_WIDTH, height: takeawayHeight, color: COLORS.panel, borderColor: COLORS.panelBorder, borderWidth: 1 });
+  page2.drawText('Revenue Takeaway', { x: PAGE.marginX + 18, y: takeawayTop - 26, size: 12.2, font: fonts.bold, color: COLORS.ink });
+  drawTextBlock(page2, takeawayText, PAGE.marginX + 18, takeawayTop - 40, CONTENT_WIDTH - 36, fonts.body, 9.2, COLORS.inkSoft, 4.1);
+  drawFooter(page2, 'MONIEZI Pro Finance | Generated privately from your local business records.', `${businessName} | P&L | ${data.periodLabel}`, fonts, 'Page 2 of 4');
+
+  // PAGE 3
+  y = drawReportPageTitle(
+    page3,
+    'MONIEZI PROFIT & LOSS',
+    'Operating Expense Breakdown',
+    'Top operating expense categories by dollar amount and share of net revenue for the selected reporting period.',
+    fonts,
+    { titleSize: 23, maxTitleLines: 2 },
+  );
+  drawMiniStat(page3, PAGE.marginX, y, statWidth, 'Top expense category', `${sanitizePdfText(data.topExpenseCategoryName)}`, `${formatAccountingCurrency(data.currencySymbol, data.topExpenseCategoryAmount)} - ${formatPercent(data.topExpenseCategorySharePct)} of operating expenses.`, fonts, 82);
+  drawMiniStat(page3, PAGE.marginX + statWidth + 12, y, statWidth, 'Expense categories used', formatNumber(data.expenseCategoryCount), 'Distinct operating expense categories represented in this statement.', fonts, 82);
+  drawMiniStat(page3, PAGE.marginX + (statWidth + 12) * 2, y, statWidth, 'Operating expense ratio', formatPercent(data.operatingExpenseRatioPct), 'Operating expenses as a percentage of net revenue.', fonts, 82);
+  y -= 82 + 18;
+
+  const labelWidthP3 = 268;
+  const amountWidthP3 = 122;
+  const shareWidthP3 = CONTENT_WIDTH - labelWidthP3 - amountWidthP3;
+  const expenseTableRows: TableRow[] = [
+    ...expenseRows.map(row => ({ label: row.name, amount: formatAccountingCurrency(data.currencySymbol, row.amount), share: formatPercent(row.sharePct) })),
+    { label: 'Total operating expenses', amount: formatAccountingCurrency(data.currencySymbol, data.totalOpex), share: formatPercent(data.operatingExpenseRatioPct), tone: 'negative', bold: true },
+    { label: 'Operating income', amount: formatAccountingCurrency(data.currencySymbol, data.operatingIncome), share: formatPercent(data.operatingMarginPct), tone: data.operatingIncome >= 0 ? 'positive' : 'negative', highlight: true, bold: true },
+  ];
+  const expenseCardHeight = SECTION_HEADER_HEIGHT + TABLE_HEADER_HEIGHT + measureTableRowsHeight(expenseTableRows, fonts, labelWidthP3) + 20;
+  const expenseBodyTop = drawSectionCard(page3, PAGE.marginX, y, CONTENT_WIDTH, expenseCardHeight, '3', 'Operating Expense Breakdown', 'Top operating expense categories by dollar amount and category share.', fonts);
+  page3.drawRectangle({ x: PAGE.marginX, y: expenseBodyTop - TABLE_HEADER_HEIGHT, width: CONTENT_WIDTH, height: TABLE_HEADER_HEIGHT, color: COLORS.panel });
+  page3.drawText('EXPENSE CATEGORY', { x: PAGE.marginX + 10, y: expenseBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 1.0 });
+  page3.drawText('AMOUNT', { x: PAGE.marginX + labelWidthP3 + amountWidthP3 - 10 - fonts.bold.widthOfTextAtSize('AMOUNT', 7.8), y: expenseBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 0.6 });
+  page3.drawText('SHARE', { x: PAGE.marginX + labelWidthP3 + amountWidthP3 + shareWidthP3 - 10 - fonts.bold.widthOfTextAtSize('SHARE', 7.8), y: expenseBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 0.6 });
+  drawTableRows(page3, PAGE.marginX, expenseBodyTop - TABLE_HEADER_HEIGHT, CONTENT_WIDTH, expenseTableRows, fonts, { labelWidth: labelWidthP3, amountWidth: amountWidthP3, shareWidth: shareWidthP3 });
+  drawFooter(page3, 'MONIEZI Pro Finance | Generated privately from your local business records.', `${businessName} | P&L | ${data.periodLabel}`, fonts, 'Page 3 of 4');
+
+  // PAGE 4
+  y = drawReportPageTitle(
+    page4,
+    'MONIEZI PROFIT & LOSS',
+    'Net Income, Notes & Handoff',
+    'Other income or expense, final statement checks, and handoff notes for accountant review.',
+    fonts,
+    { titleSize: 22, titleWidth: CONTENT_WIDTH - 160, maxTitleLines: 2 },
+  );
+  y = drawInfoBoxRow(page4, y + 8, [{ label: 'Reporting period', value: data.reportingPeriodLabel, width: 176, height: 46 }], fonts, 'right');
+
+  const splitGap = 14;
+  const splitWidth = (CONTENT_WIDTH - splitGap) / 2;
+  const otherTableRows: TableRow[] = [
+    ...otherRows.map(row => ({ label: row.name, amount: formatAccountingCurrency(data.currencySymbol, row.amount), share: '' })),
+    { label: 'Net other income', amount: formatAccountingCurrency(data.currencySymbol, data.netOtherIncome), share: '', tone: data.netOtherIncome >= 0 ? 'positive' : 'negative', highlight: true, bold: true },
+  ];
+  const otherCardHeight = SECTION_HEADER_HEIGHT + TABLE_HEADER_HEIGHT + measureTableRowsHeight(otherTableRows, fonts, splitWidth - 24 - 110) + 22;
+  const checksBodyHeight = Math.max(96, data.statementChecks.reduce((sum, item, idx) => sum + textBlockHeight(item, fonts.body, 9, splitWidth - 46, 3.5) + (idx < data.statementChecks.length - 1 ? 12 : 0), 0));
+  const checksCardHeight = SECTION_HEADER_HEIGHT + SECTION_INSET + checksBodyHeight + SECTION_INSET;
+  const topSectionHeight = Math.max(otherCardHeight, checksCardHeight);
+  const topSectionY = y - 10;
+
+  const otherBodyTop = drawSectionCard(page4, PAGE.marginX, topSectionY, splitWidth, otherCardHeight, '4', 'Other Income / Expense', 'Below-the-line items that sit outside core operating activity.', fonts);
+  page4.drawRectangle({ x: PAGE.marginX, y: otherBodyTop - TABLE_HEADER_HEIGHT, width: splitWidth, height: TABLE_HEADER_HEIGHT, color: COLORS.panel });
+  page4.drawText('ACCOUNT', { x: PAGE.marginX + 10, y: otherBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 1.0 });
+  page4.drawText('AMOUNT', { x: PAGE.marginX + splitWidth - 10 - fonts.bold.widthOfTextAtSize('AMOUNT', 7.8), y: otherBodyTop - 17, size: 7.8, font: fonts.bold, color: COLORS.inkSoft, characterSpacing: 0.6 });
+  drawTableRows(page4, PAGE.marginX, otherBodyTop - TABLE_HEADER_HEIGHT, splitWidth, otherTableRows, fonts, { labelWidth: splitWidth - 120, amountWidth: 120, shareWidth: 0 });
+
+  const checksBodyTop = drawSectionCard(page4, PAGE.marginX + splitWidth + splitGap, topSectionY, splitWidth, checksCardHeight, '5', 'Statement Checks Before Handoff', 'Items to confirm before handing this statement to your accountant or reviewer.', fonts);
+  let bulletY = checksBodyTop;
+  data.statementChecks.forEach((item, index) => {
+    const lines = splitLines(item, fonts.body, 9, splitWidth - 46);
+    page4.drawCircle({ x: PAGE.marginX + splitWidth + splitGap + 16, y: bulletY + 2, size: 2.5, color: COLORS.blue });
+    lines.forEach((line, lineIndex) => {
+      page4.drawText(sanitizePdfText(line), {
+        x: PAGE.marginX + splitWidth + splitGap + 26,
+        y: bulletY - lineIndex * 13,
+        size: 9,
+        font: fonts.body,
+        color: COLORS.ink,
+      });
+    });
+    bulletY -= lines.length * 13 + (index < data.statementChecks.length - 1 ? 12 : 0);
+  });
+
+  const noteText = `MONIEZI prepared this profit and loss statement from recorded ledger activity for the selected reporting period. Use it as a clear summary of gross sales, net revenue, direct costs, operating expenses, and final net income. Final classification decisions, adjusting entries, and tax treatment should still be reviewed with your accountant or tax professional.`;
+  const noteTop = topSectionY - topSectionHeight - 18;
+  const noteHeight = 34 + textBlockHeight(noteText, fonts.body, 9.2, CONTENT_WIDTH - 36, 4.1) + 18;
+  page4.drawRectangle({ x: PAGE.marginX, y: noteTop - noteHeight, width: CONTENT_WIDTH, height: noteHeight, color: COLORS.panel, borderColor: COLORS.panelBorder, borderWidth: 1 });
+  page4.drawText('Pre-Filing Note', { x: PAGE.marginX + 18, y: noteTop - 26, size: 12.2, font: fonts.bold, color: COLORS.ink });
+  drawTextBlock(page4, noteText, PAGE.marginX + 18, noteTop - 40, CONTENT_WIDTH - 36, fonts.body, 9.2, COLORS.inkSoft, 4.1);
+
+  const statsTop = noteTop - noteHeight - 18;
+  const statCardWidth = (CONTENT_WIDTH - 12) / 2;
+  drawMiniStat(page4, PAGE.marginX, statsTop, statCardWidth, 'Prepared by', preparedBy, 'Name shown for statement reference only. Data remains stored locally.', fonts, 64);
+  drawMiniStat(page4, PAGE.marginX + statCardWidth + 12, statsTop, statCardWidth, 'Generated', data.generatedAtLabel, 'Export timestamp for this statement package.', fonts, 64);
+
+  const finalTop = statsTop - 82;
+  page4.drawRectangle({ x: PAGE.marginX, y: finalTop - 82, width: CONTENT_WIDTH, height: 82, color: COLORS.ink });
+  page4.drawText('FINAL RESULT', { x: PAGE.marginX + 18, y: finalTop - 20, size: 9, font: fonts.bold, color: COLORS.panelBorder, characterSpacing: 1.4 });
+  page4.drawText('Net Income', { x: PAGE.marginX + 18, y: finalTop - 52, size: 22, font: fonts.bold, color: COLORS.white });
+  page4.drawText('After direct costs, operating expenses, and other income or expense.', { x: PAGE.marginX + 18, y: finalTop - 68, size: 8.5, font: fonts.body, color: COLORS.panelBorder });
+  const finalValue = formatAccountingCurrency(data.currencySymbol, data.netIncome);
+  const finalValueSize = finalValue.length > 14 ? 24 : 26;
+  const finalValueWidth = fonts.bold.widthOfTextAtSize(finalValue, finalValueSize);
+  page4.drawText(finalValue, { x: PAGE.width - PAGE.marginX - 18 - finalValueWidth, y: finalTop - 52, size: finalValueSize, font: fonts.bold, color: data.netIncome >= 0 ? COLORS.green : COLORS.red });
+  const marginText = `Net Margin ${formatPercent(data.netMarginPct)}`;
+  const marginTextWidth = fonts.body.widthOfTextAtSize(marginText, 8.5);
+  page4.drawText(marginText, { x: PAGE.width - PAGE.marginX - 18 - marginTextWidth, y: finalTop - 68, size: 8.5, font: fonts.body, color: COLORS.panelBorder });
+
+  drawFooter(page4, 'MONIEZI Pro Finance | Generated privately from your local business records.', `${businessName} | P&L | ${data.periodLabel}`, fonts, 'Page 4 of 4');
+
+  pdfDoc.setTitle(sanitizePdfText(`MONIEZI Profit & Loss ${data.periodLabel}`));
+  pdfDoc.setAuthor('MONIEZI');
+  pdfDoc.setCreator('MONIEZI Pro Finance');
+  pdfDoc.setProducer('MONIEZI Pro Finance');
+  pdfDoc.setSubject(sanitizePdfText(`Profit & Loss ${data.periodLabel}`));
+
+  return pdfDoc.save();
+}

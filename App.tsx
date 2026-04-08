@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useR
 import { createPortal } from 'react-dom';
 import html2pdf from 'html2pdf.js';
 import { installMonieziFonts, waitForMonieziFonts } from './src/monieziFonts';
-import { generateTaxSummaryPdfBytes, type TaxSummaryPdfData } from './src/reportPdfEngine';
+import { generateTaxSummaryPdfBytes, generateProfitLossPdfBytes, type TaxSummaryPdfData, type ProfitLossPdfData } from './src/reportPdfEngine';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -2868,60 +2868,6 @@ export default function App() {
     };
   }, [transactions, plPeriodType, plCustomStart, plCustomEnd]);
 
-
-  const proPLGeneratedAtLabel = new Date().toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  const proPLDateRangeLabel = `${proPLData.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${proPLData.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  const proPLRevenueRows = Object.entries(proPLData.incomeByCategory).sort(([, a], [, b]) => b - a);
-  const proPLCogsRows = Object.entries(proPLData.cogsByCategory).sort(([, a], [, b]) => b - a);
-  const proPLExpenseRows = Object.entries(proPLData.expensesByCategory).sort(([, a], [, b]) => b - a);
-  const proPLExpenseTopRow = proPLExpenseRows[0] || ['No operating expenses recorded', 0];
-  const proPLTopExpenseShare = proPLData.totalOpex > 0 ? ((Number(proPLExpenseTopRow[1]) / proPLData.totalOpex) * 100) : 0;
-  const proPLExpenseDisplayRows = (() => {
-    if (proPLExpenseRows.length <= 7) return proPLExpenseRows;
-    const topRows = proPLExpenseRows.slice(0, 6);
-    const otherTotal = proPLExpenseRows.slice(6).reduce((sum, [, amount]) => sum + amount, 0);
-    return [...topRows, ['Other recorded categories', otherTotal] as [string, number]];
-  })();
-  const proPLRevenueDisplayRows = (() => {
-    if (proPLRevenueRows.length <= 6) return proPLRevenueRows;
-    const topRows = proPLRevenueRows.slice(0, 5);
-    const otherTotal = proPLRevenueRows.slice(5).reduce((sum, [, amount]) => sum + amount, 0);
-    return [...topRows, ['Other income categories', otherTotal] as [string, number]];
-  })();
-  const proPLReviewItems = [
-    proPLData.uncategorizedCount > 0
-      ? `Review ${proPLData.uncategorizedCount} uncategorized entries totaling ${formatCurrency.format(proPLData.uncategorizedAmount)} before handing this statement to your accountant.`
-      : 'No uncategorized entries were detected in this reporting period.',
-    proPLData.refunds > 0
-      ? `Returns and refunds of ${formatCurrency.format(proPLData.refunds)} have been netted against gross sales in this statement.`
-      : 'No returns or refunds were recorded in the selected reporting period.',
-    `${plAccountingBasis === 'cash' ? 'Cash' : 'Accrual'} basis is applied throughout this P&L statement.`
-  ];
-
-  const renderProPLFooter = (pageNumber: number) => (
-    <div className="mt-auto pt-5 border-t border-slate-200 text-[10px] text-slate-500 flex items-center justify-between gap-4">
-      <div>MONIEZI Pro Finance | Generated privately from your local business records.</div>
-      <div>{settings.businessName} | P&amp;L | {proPLData.periodLabel} - Page {pageNumber} of 4</div>
-    </div>
-  );
-
-  const renderProPLSnapshotRow = (label: string, value: string, note: string, valueClassName: string = 'text-slate-950') => (
-    <div className="grid grid-cols-[1fr_auto] gap-4 border-t border-slate-200 px-4 py-3 first:border-t-0">
-      <div>
-        <div className="text-[13px] font-semibold text-slate-950">{label}</div>
-        <div className="mt-1 text-[10px] leading-4 text-slate-500">{note}</div>
-      </div>
-      <div className={`text-[13px] font-bold tabular-nums ${valueClassName}`}>{value}</div>
-    </div>
-  );
-
   const getFilteredTransactions = useCallback(() => {
      if (filterPeriod === 'all') return transactions;
      return transactions.filter(t => {
@@ -5081,94 +5027,132 @@ const demoMileageTrips: MileageTrip[] = [
   };
 
 
-  const buildProPLPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const element = document.getElementById('pro-pl-pdf-content');
-    if (!element) throw new Error('P&L content not found');
+  const buildProPLPdfData = useCallback((): ProfitLossPdfData => {
+    const formatDate = (date: Date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const collapseCategoryRows = (input: Record<string, number>, denominator: number, limit: number, otherLabel = 'Other recorded categories') => {
+      const entries = Object.entries(input || {})
+        .filter(([, amount]) => Math.abs(Number(amount) || 0) > 0.0001)
+        .sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0));
 
-    const images = Array.from(element.querySelectorAll('img'));
-    await Promise.all(images.map(img => {
-      if ((img as HTMLImageElement).complete) return Promise.resolve(true);
-      return new Promise(resolve => {
-        (img as HTMLImageElement).onload = () => resolve(true);
-        (img as HTMLImageElement).onerror = () => resolve(true);
-        setTimeout(() => resolve(true), 2000);
-      });
-    }));
-
-    let cloneWrapper: HTMLDivElement | null = null;
-
-    try {
-      const source = element as HTMLElement;
-      cloneWrapper = document.createElement('div');
-      cloneWrapper.style.position = 'fixed';
-      cloneWrapper.style.left = '-100000px';
-      cloneWrapper.style.top = '0';
-      cloneWrapper.style.width = `${Math.max(source.scrollWidth, 700)}px`;
-      cloneWrapper.style.background = '#ffffff';
-      cloneWrapper.style.padding = '0';
-      cloneWrapper.style.margin = '0';
-      cloneWrapper.style.zIndex = '-1';
-      cloneWrapper.style.overflow = 'visible';
-
-      const clone = prepareProfitLossPdfClone(source);
-      clone.style.width = `${Math.max(source.scrollWidth, 700)}px`;
-      clone.style.maxWidth = 'none';
-      clone.style.margin = '0';
-      cloneWrapper.appendChild(clone);
-      document.body.appendChild(cloneWrapper);
-
-      await new Promise(resolve => requestAnimationFrame(() => resolve(true)));
-
-      const contentWidth = Math.max(clone.scrollWidth, clone.offsetWidth, 700);
-      const contentHeight = Math.max(clone.scrollHeight, clone.offsetHeight);
-      const businessNameSafe = (settings.businessName || 'Business').replace(/[^a-z0-9]/gi, '_');
-      const endDateSafe = proPLData.endDate.toISOString().split('T')[0];
-      const filename = `PL_${businessNameSafe}_${endDateSafe}.pdf`;
-
-      const opt = {
-        margin: [8, 8, 8, 8],
-        filename,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          scrollY: 0,
-          scrollX: 0,
-          windowWidth: contentWidth,
-          windowHeight: contentHeight
-        },
-        jsPDF: {
-          unit: 'mm',
-          format: 'a4',
-          orientation: 'portrait'
-        },
-        pagebreak: {
-          mode: ['css', 'legacy']
-        }
-      };
-
-      const worker = html2pdf().set(opt).from(clone);
-      let blob: Blob | null = null;
-
-      try {
-        if (typeof (worker as any).outputPdf === 'function') {
-          blob = await (worker as any).outputPdf('blob');
-        }
-      } catch {}
-
-      if (!blob) {
-        await (worker as any).toPdf();
-        const pdf = await (worker as any).get('pdf');
-        blob = pdf.output('blob');
+      if (entries.length <= limit) {
+        return entries.map(([name, amount]) => ({
+          name,
+          amount: Number(amount) || 0,
+          sharePct: denominator > 0 ? ((Number(amount) || 0) / denominator) * 100 : 0,
+        }));
       }
 
-      return { blob: blob!, filename };
-    } finally {
-      if (cloneWrapper && cloneWrapper.parentNode) cloneWrapper.parentNode.removeChild(cloneWrapper);
+      const primary = entries.slice(0, limit - 1).map(([name, amount]) => ({
+        name,
+        amount: Number(amount) || 0,
+        sharePct: denominator > 0 ? ((Number(amount) || 0) / denominator) * 100 : 0,
+      }));
+      const otherTotal = entries.slice(limit - 1).reduce((sum, [, amount]) => sum + (Number(amount) || 0), 0);
+      return [
+        ...primary,
+        {
+          name: otherLabel,
+          amount: otherTotal,
+          sharePct: denominator > 0 ? (otherTotal / denominator) * 100 : 0,
+        },
+      ];
+    };
+
+    const revenueRows = collapseCategoryRows(proPLData.incomeByCategory || {}, proPLData.netRevenue, 6);
+    const cogsRows = Object.entries(proPLData.cogsByCategory || {})
+      .filter(([, amount]) => Math.abs(Number(amount) || 0) > 0.0001)
+      .sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
+      .slice(0, 4)
+      .map(([name, amount]) => ({
+        name,
+        amount: Number(amount) || 0,
+        sharePct: proPLData.netRevenue > 0 ? ((Number(amount) || 0) / proPLData.netRevenue) * 100 : 0,
+      }));
+
+    const expenseRows = collapseCategoryRows(proPLData.expensesByCategory || {}, proPLData.totalOpex, 7);
+    const sortedExpenseRows = [...expenseRows].sort((a, b) => b.amount - a.amount);
+    const topExpense = sortedExpenseRows[0] || { name: 'No operating expenses recorded', amount: 0, sharePct: 0 };
+
+    const otherIncomeRows: Array<{ name: string; amount: number }> = [];
+    if (Math.abs(proPLData.interestIncome || 0) > 0.0001) {
+      otherIncomeRows.push({ name: 'Interest Income', amount: Number(proPLData.interestIncome) || 0 });
     }
+    if (Math.abs(proPLData.interestExpense || 0) > 0.0001) {
+      otherIncomeRows.push({ name: 'Interest Expense', amount: -Math.abs(Number(proPLData.interestExpense) || 0) });
+    }
+    if (otherIncomeRows.length === 0) {
+      otherIncomeRows.push({ name: 'No other income / expense recorded', amount: 0 });
+    }
+
+    const statementChecks: string[] = [];
+    if (proPLData.uncategorizedCount > 0) {
+      statementChecks.push(`Review ${proPLData.uncategorizedCount} uncategorized entr${proPLData.uncategorizedCount === 1 ? 'y' : 'ies'} totaling ${formatCurrency.format(proPLData.uncategorizedAmount)} before final filing.`);
+    } else {
+      statementChecks.push('No uncategorized entries were detected in this reporting period.');
+    }
+    if (Math.abs(proPLData.refunds) > 0.0001) {
+      statementChecks.push(`Returns and refunds of ${formatCurrency.format(proPLData.refunds)} have been netted against gross sales in this statement.`);
+    } else {
+      statementChecks.push('No returns or refunds were recorded in this reporting period.');
+    }
+    statementChecks.push(`${plAccountingBasis === 'cash' ? 'Cash Basis' : 'Accrual Basis'} is applied throughout this P&L statement.`);
+
+    const ownerName = (settings.ownerName || '').trim();
+    const preparedBy = !ownerName || ownerName.toLowerCase() === 'owner' ? 'Prepared privately' : ownerName;
+
+    return {
+      businessName: settings.businessName || 'Business',
+      ownerName: preparedBy,
+      generatedAtLabel: new Date().toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      }),
+      reportingPeriodLabel: `${formatDate(proPLData.startDate)} - ${formatDate(proPLData.endDate)}`,
+      periodLabel: proPLData.periodLabel,
+      accountingBasisLabel: plAccountingBasis === 'cash' ? 'Cash Basis' : 'Accrual Basis',
+      grossSales: Number(proPLData.salesServices || 0) + Number(proPLData.refunds || 0),
+      refunds: Number(proPLData.refunds) || 0,
+      netRevenue: Number(proPLData.netRevenue) || 0,
+      cogs: Number(proPLData.cogs) || 0,
+      grossProfit: Number(proPLData.grossProfit) || 0,
+      totalOpex: Number(proPLData.totalOpex) || 0,
+      operatingIncome: Number(proPLData.operatingIncome) || 0,
+      otherIncome: Number(proPLData.interestIncome) || 0,
+      otherExpenses: Number(proPLData.interestExpense) || 0,
+      netOtherIncome: Number(proPLData.netOtherIncome) || 0,
+      netIncome: Number(proPLData.netIncome) || 0,
+      grossMarginPct: Number(proPLData.grossMargin) || 0,
+      operatingExpenseRatioPct: proPLData.netRevenue > 0 ? ((Number(proPLData.totalOpex) || 0) / Number(proPLData.netRevenue)) * 100 : 0,
+      operatingMarginPct: Number(proPLData.operatingMargin) || 0,
+      netMarginPct: Number(proPLData.netMargin) || 0,
+      transactionCount: Number(proPLData.transactionCount) || 0,
+      expenseCategoryCount: Object.keys(proPLData.expensesByCategory || {}).length,
+      topExpenseCategoryName: topExpense.name,
+      topExpenseCategoryAmount: topExpense.amount,
+      topExpenseCategorySharePct: topExpense.sharePct,
+      revenueRows,
+      cogsRows,
+      expenseRows,
+      otherIncomeRows,
+      statementChecks,
+      currencySymbol: '$',
+    };
+  }, [plAccountingBasis, proPLData, settings.businessName, settings.ownerName]);
+
+
+  const buildProPLPdfBlob = async (): Promise<{ blob: Blob; filename: string }> => {
+    const pdfData = buildProPLPdfData();
+    const safeBusiness = (pdfData.businessName || 'Business').replace(/[^a-z0-9]/gi, '_');
+    const safeEndDate = proPLData.endDate.toISOString().split('T')[0];
+    const filename = `PL_${safeBusiness}_${safeEndDate}.pdf`;
+    const pdfBytes = await generateProfitLossPdfBytes(pdfData);
+    return {
+      blob: new Blob([pdfBytes], { type: 'application/pdf' }),
+      filename,
+    };
   };
 
   const downloadBlobFile = (blob: Blob, filename: string) => {
@@ -5199,7 +5183,7 @@ const demoMileageTrips: MileageTrip[] = [
     }
   };
 
-  // Share PDF for Profit & Loss preview using the native OS share sheet when available.
+  // Share the true generated Profit & Loss PDF using the native OS share sheet when available.
   // Falls back to a normal download only on browsers that cannot share files.
   const shareProPLPDF = async () => {
     if (isGeneratingProPLPdf) return;
@@ -5222,9 +5206,13 @@ const demoMileageTrips: MileageTrip[] = [
         downloadBlobFile(blob, filename);
         showToast('Sharing not available on this device. PDF downloaded instead.', 'success');
       }
-    } catch (error) {
-      console.error('P&L Share error:', error);
-      showToast('Share failed', 'error');
+    } catch (error: any) {
+      if (error?.name === 'AbortError') {
+        showToast('Share canceled', 'info');
+      } else {
+        console.error('P&L Share error:', error);
+        showToast('Share failed', 'error');
+      }
     } finally {
       setIsGeneratingProPLPdf(false);
     }
@@ -7469,13 +7457,24 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setShowProPLPreview(true)}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors"
-                  >
-                    <Eye className="w-4 h-4" />
-                    <span>Preview &amp; Share</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={shareProPLPDF}
+                      disabled={isGeneratingProPLPdf}
+                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      {isGeneratingProPLPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
+                      <span>{isGeneratingProPLPdf ? 'Preparing...' : 'Share PDF'}</span>
+                    </button>
+                    <button
+                      onClick={saveProPLPDF}
+                      disabled={isGeneratingProPLPdf}
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                      {isGeneratingProPLPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                      <span>{isGeneratingProPLPdf ? 'Preparing...' : 'Download PDF'}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Period Selector */}
@@ -7549,9 +7548,9 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
                 {/* P&L statement is shown in the Preview modal to keep this screen clean */}
                 <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Statement hidden</div>
+                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Premium P&amp;L PDF</div>
                   <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                    Tap <span className="font-bold">Preview &amp; Share</span> to view the full Profit &amp; Loss and share the PDF.
+                    This report now exports as a page-based PDF directly. Use <span className="font-bold">Share PDF</span> or <span className="font-bold">Download PDF</span> above.
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
@@ -8639,336 +8638,367 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
               {/* PDF Content */}
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 overscroll-contain" style={{ WebkitOverflowScrolling: 'touch' }}>
-                <div id="pro-pl-pdf-content" className="moniezi-report-font bg-white text-slate-900 mx-auto" style={{ fontFamily: 'var(--moniezi-report-font)', width: '760px', maxWidth: '100%' }}>
-                  <div className="bg-white px-8 pt-8 pb-6 min-h-[1040px] flex flex-col" style={{ breakAfter: 'page', pageBreakAfter: 'always' }}>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">MONIEZI PROFIT &amp; LOSS</div>
-                    <h1 className="mt-6 text-[28px] leading-tight font-extrabold tracking-tight text-slate-950">Profit &amp; Loss Statement</h1>
-                    <p className="mt-3 max-w-[620px] text-[11px] leading-5 text-slate-500">
-                      A concise management statement summarizing revenue, direct costs, operating expenses, and net income from your local MONIEZI records.
-                    </p>
-
-                    <div className="mt-6 grid grid-cols-3 gap-3">
-                      <div className="border border-blue-100 bg-blue-50/70 px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Business</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{settings.businessName}</div>
+                <div id="pro-pl-pdf-content" className="moniezi-report-font bg-slate-50 text-slate-900 rounded-[24px] shadow-lg mx-auto overflow-hidden border border-slate-200" style={{ fontFamily: 'var(--moniezi-report-font)', width: '760px', maxWidth: '100%' }}>
+                  <div className="bg-slate-950 text-white px-6 sm:px-8 pt-7 pb-6">
+                    <div className="flex items-start justify-between gap-6">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-200">MONIEZI PROFIT &amp; LOSS</div>
+                        <h1 className="mt-3 text-[28px] leading-tight font-extrabold tracking-tight">Premium Business Statement</h1>
+                        <p className="mt-2 max-w-[480px] text-sm leading-6 text-slate-300">
+                          A polished operating statement summarizing revenue, direct costs, operating expenses, and net income from your local MONIEZI records.
+                        </p>
                       </div>
-                      <div className="border border-blue-100 bg-blue-50/70 px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Reporting Period</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{proPLDateRangeLabel}</div>
-                      </div>
-                      <div className="border border-blue-100 bg-blue-50/70 px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Accounting Basis</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{plAccountingBasis === 'cash' ? 'Cash Basis' : 'Accrual Basis'}</div>
-                      </div>
+                      {settings.businessLogo && (
+                        <img
+                          src={settings.businessLogo}
+                          alt="Logo"
+                          className="h-12 sm:h-14 w-auto max-w-[170px] object-contain rounded-xl bg-white/95 p-2"
+                          crossOrigin="anonymous"
+                        />
+                      )}
                     </div>
 
                     <div className="mt-6 grid grid-cols-2 gap-3">
-                      <div className="border border-slate-200 bg-white px-4 py-4 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Net Revenue</div>
-                        <div className="mt-1.5 text-[32px] leading-none font-extrabold tabular-nums text-slate-950">{formatCurrency.format(proPLData.netRevenue)}</div>
-                        <div className="mt-2 text-[10px] leading-4 text-slate-500">Gross sales less returns and refunds recorded in this statement.</div>
+                      <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">Business</div>
+                        <div className="mt-2 text-base font-bold text-white">{settings.businessName}</div>
+                        <div className="mt-1 text-xs text-slate-300">Prepared privately from your local MONIEZI records.</div>
                       </div>
-                      <div className="border border-slate-200 bg-white px-4 py-4 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Gross Profit</div>
-                        <div className="mt-1.5 text-[32px] leading-none font-extrabold tabular-nums text-slate-950">{formatCurrency.format(proPLData.grossProfit)}</div>
-                        <div className="mt-2 text-[10px] leading-4 text-slate-500">After direct costs. Gross margin {proPLData.grossMargin.toFixed(1)}%.</div>
+                      <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">Reporting Period</div>
+                        <div className="mt-2 text-sm font-semibold text-white">
+                          {proPLData.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {proPLData.endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-300">{proPLData.periodLabel}</div>
                       </div>
-                      <div className="border border-slate-200 bg-white px-4 py-4 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Operating Expenses</div>
-                        <div className="mt-1.5 text-[32px] leading-none font-extrabold tabular-nums text-slate-950">{formatCurrency.format(proPLData.totalOpex)}</div>
-                        <div className="mt-2 text-[10px] leading-4 text-slate-500">All operating expenses recorded before below-the-line income or expense.</div>
+                      <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">Accounting Basis</div>
+                        <div className="mt-2 text-base font-bold text-white">{plAccountingBasis === 'cash' ? 'Cash Basis' : 'Accrual Basis'}</div>
+                        <div className="mt-1 text-xs text-slate-300">USD statement format with expense grouping and margin analysis.</div>
                       </div>
-                      <div className="border border-slate-200 bg-white px-4 py-4 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Net Income</div>
-                        <div className={`mt-1.5 text-[32px] leading-none font-extrabold tabular-nums ${proPLData.netIncome >= 0 ? 'text-slate-950' : 'text-red-700'}`}>
+                      <div className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-blue-200">Generated</div>
+                        <div className="mt-2 text-sm font-semibold text-white">
+                          {new Date().toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-300">Export timestamp for this statement package.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 px-6 sm:px-8 py-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Net Revenue</div>
+                        <div className="mt-2 text-[24px] font-extrabold text-slate-950 tabular-nums">{formatCurrency.format(proPLData.netRevenue)}</div>
+                        <div className={`mt-2 text-xs font-semibold ${proPLData.revenueChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {proPLData.revenueChange >= 0 ? 'Up' : 'Down'} {Math.abs(proPLData.revenueChange).toFixed(1)}% vs prior period
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Gross Profit</div>
+                        <div className="mt-2 text-[24px] font-extrabold text-slate-950 tabular-nums">{formatCurrency.format(proPLData.grossProfit)}</div>
+                        <div className="mt-2 text-xs font-semibold text-slate-600">Gross margin {proPLData.grossMargin.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Operating Expenses</div>
+                        <div className="mt-2 text-[24px] font-extrabold text-slate-950 tabular-nums">{formatCurrency.format(proPLData.totalOpex)}</div>
+                        <div className={`mt-2 text-xs font-semibold ${proPLData.opexChange <= 0 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          {proPLData.opexChange <= 0 ? 'Down' : 'Up'} {Math.abs(proPLData.opexChange).toFixed(1)}% vs prior period
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Net Income</div>
+                        <div className={`mt-2 text-[24px] font-extrabold tabular-nums ${proPLData.netIncome >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                           {proPLData.netIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.netIncome))})` : formatCurrency.format(proPLData.netIncome)}
                         </div>
-                        <div className="mt-2 text-[10px] leading-4 text-slate-500">Final result after operating activity and other income or expense.</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 border border-slate-200 bg-white rounded-[3px] overflow-hidden">
-                      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-600">Section 1</div>
-                        <div className="mt-1 text-[18px] font-bold text-slate-950">Financial Snapshot &amp; Statement Scope</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Core figures, reporting basis, and statement metadata typically reviewed before deeper accounting work begins.</div>
-                      </div>
-                      {renderProPLSnapshotRow('Total gross sales', formatCurrency.format(proPLData.salesServices), 'Recorded income categories before refunds for the selected reporting period.')}
-                      {renderProPLSnapshotRow('Returns & refunds', proPLData.refunds > 0 ? `(${formatCurrency.format(proPLData.refunds)})` : formatCurrency.format(0), 'Contra-revenue items netted against gross sales in this statement.', proPLData.refunds > 0 ? 'text-red-700' : 'text-slate-950')}
-                      {renderProPLSnapshotRow('Net revenue', formatCurrency.format(proPLData.netRevenue), 'Gross sales less recorded refunds.', 'text-emerald-700')}
-                      {renderProPLSnapshotRow('Direct costs / COGS', formatCurrency.format(proPLData.cogs), 'Costs recorded as materials, shipping, subcontractors, processing, or other direct inputs.')}
-                      {renderProPLSnapshotRow('Gross profit', formatCurrency.format(proPLData.grossProfit), 'Net revenue less direct costs.')} 
-                      {renderProPLSnapshotRow('Total operating expenses', formatCurrency.format(proPLData.totalOpex), 'Operating expenses recorded after excluding direct costs and refunds.', 'text-red-700')}
-                      {renderProPLSnapshotRow('Net income', proPLData.netIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.netIncome))})` : formatCurrency.format(proPLData.netIncome), 'Operating income plus other income or expense.', proPLData.netIncome >= 0 ? 'text-emerald-700' : 'text-red-700')}
-                      {renderProPLSnapshotRow('Ledger transactions included', String(proPLData.transactionCount), 'Total transaction records represented in this statement.')}
-                      {renderProPLSnapshotRow('Expense categories used', String(Object.keys(proPLData.expensesByCategory).length), 'Distinct operating expense categories used in the reporting window.')}
-                    </div>
-
-                    {renderProPLFooter(1)}
-                  </div>
-
-                  <div className="bg-white px-8 pt-8 pb-6 min-h-[1040px] flex flex-col" style={{ breakAfter: 'page', pageBreakAfter: 'always' }}>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">MONIEZI PROFIT &amp; LOSS</div>
-                    <h2 className="mt-6 text-[28px] leading-tight font-extrabold tracking-tight text-slate-950">Revenue &amp; Gross Profit</h2>
-                    <p className="mt-3 max-w-[620px] text-[11px] leading-5 text-slate-500">
-                      Top revenue categories, refunds, direct costs, and resulting gross profit for the selected reporting period.
-                    </p>
-
-                    <div className="mt-6 grid grid-cols-3 gap-3">
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Gross Sales</div>
-                        <div className="mt-1.5 text-[20px] font-extrabold tabular-nums text-slate-950">{formatCurrency.format(proPLData.salesServices)}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Before refunds and returns.</div>
-                      </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Returns &amp; Refunds</div>
-                        <div className={`mt-1.5 text-[20px] font-extrabold tabular-nums ${proPLData.refunds > 0 ? 'text-red-700' : 'text-slate-950'}`}>
-                          {proPLData.refunds > 0 ? `(${formatCurrency.format(proPLData.refunds)})` : formatCurrency.format(0)}
+                        <div className={`mt-2 text-xs font-semibold ${proPLData.netIncomeChange >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {proPLData.netIncomeChange >= 0 ? 'Up' : 'Down'} {Math.abs(proPLData.netIncomeChange).toFixed(1)}% vs prior period
                         </div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Netted against gross sales.</div>
-                      </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Gross Margin</div>
-                        <div className="mt-1.5 text-[20px] font-extrabold tabular-nums text-slate-950">{proPLData.grossMargin.toFixed(1)}%</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Gross profit as a percentage of net revenue.</div>
                       </div>
                     </div>
 
-                    <div className="mt-6 border border-slate-200 bg-white rounded-[3px] overflow-hidden">
-                      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-600">Section 2</div>
-                        <div className="mt-1 text-[18px] font-bold text-slate-950">Revenue &amp; Gross Profit Detail</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Sales categories, refunds, direct costs, and the resulting gross profit position.</div>
+                    <div className="grid grid-cols-3 gap-3 mb-6">
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Transactions Included</div>
+                        <div className="mt-2 text-lg font-bold text-slate-950 tabular-nums">{proPLData.transactionCount}</div>
                       </div>
-                      <div className="px-4 py-3">
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 border-b border-slate-200 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                          <div>Account</div>
-                          <div className="text-right">Amount</div>
-                          <div className="text-right">% Rev</div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Operating Margin</div>
+                        <div className="mt-2 text-lg font-bold text-slate-950 tabular-nums">{proPLData.operatingMargin.toFixed(1)}%</div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                        <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-slate-500">Net Margin</div>
+                        <div className="mt-2 text-lg font-bold text-slate-950 tabular-nums">{proPLData.netMargin.toFixed(1)}%</div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden mb-5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">Section 1</div>
+                        <div className="mt-1 text-lg font-bold text-slate-950">Revenue &amp; Sales</div>
+                        <div className="mt-1 text-xs text-slate-500">Gross sales categories, refunds, and net revenue for the selected reporting period.</div>
+                      </div>
+                      <div className="px-5 py-4">
+                        <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 border-b border-slate-200 pb-2 mb-2">
+                          <div className="flex-1 min-w-0">Account</div>
+                          <div className="w-28 text-right flex-shrink-0">Amount</div>
+                          <div className="w-16 text-right flex-shrink-0">% Rev</div>
                         </div>
-                        {proPLRevenueDisplayRows.map(([category, amount]) => (
-                          <div key={category} className="grid grid-cols-[1fr_110px_64px] gap-4 border-b border-slate-100 py-2 text-[13px] text-slate-700 last:border-b-0">
-                            <div>{category}</div>
-                            <div className="text-right font-semibold tabular-nums text-slate-950">{formatCurrency.format(amount)}</div>
-                            <div className="text-right text-[11px] text-slate-500">{proPLData.netRevenue > 0 ? `${((amount / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                        {Object.entries(proPLData.incomeByCategory)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([category, amount]) => (
+                            <div key={category} className="flex items-center py-2 border-b border-slate-100 last:border-b-0">
+                              <div className="flex-1 pr-4 text-slate-700">{category}</div>
+                              <div className="w-28 text-right font-semibold tabular-nums text-slate-950">{formatCurrency.format(amount)}</div>
+                              <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((amount / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                            </div>
+                          ))}
+                        {Object.keys(proPLData.incomeByCategory).length > 1 && (
+                          <div className="flex items-center py-2 mt-2 font-bold border-t border-slate-200 text-slate-900">
+                            <div className="flex-1">Total Gross Sales</div>
+                            <div className="w-28 text-right tabular-nums">{formatCurrency.format(proPLData.salesServices)}</div>
+                            <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.salesServices / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
                           </div>
-                        ))}
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 border-t border-slate-200 py-2.5 text-[13px] font-bold text-slate-950">
-                          <div>Total gross sales</div>
-                          <div className="text-right tabular-nums">{formatCurrency.format(proPLData.salesServices)}</div>
-                          <div className="text-right text-[11px] text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.salesServices / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
-                        </div>
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 rounded-[3px] bg-red-50 px-3 py-2 text-[13px] text-red-700">
-                          <div className="italic">Less: Returns &amp; Refunds</div>
-                          <div className="text-right font-bold tabular-nums">{proPLData.refunds > 0 ? `(${formatCurrency.format(proPLData.refunds)})` : formatCurrency.format(0)}</div>
-                          <div className="text-right text-[11px]"> </div>
-                        </div>
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 mt-2 rounded-[3px] bg-emerald-50 px-3 py-2.5 text-[13px] font-bold text-emerald-800">
-                          <div className="uppercase tracking-[0.08em]">Net Revenue</div>
-                          <div className="text-right tabular-nums">{formatCurrency.format(proPLData.netRevenue)}</div>
-                          <div className="text-right text-[11px]">100.0%</div>
-                        </div>
-
-                        <div className="mt-5 grid grid-cols-[1fr_110px_64px] gap-4 border-b border-slate-200 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                          <div>Direct Costs / COGS</div>
-                          <div className="text-right">Amount</div>
-                          <div className="text-right">% Rev</div>
-                        </div>
-                        {proPLCogsRows.length > 0 ? proPLCogsRows.map(([category, amount]) => (
-                          <div key={category} className="grid grid-cols-[1fr_110px_64px] gap-4 border-b border-slate-100 py-2 text-[13px] text-slate-700 last:border-b-0">
-                            <div>{category}</div>
-                            <div className="text-right font-semibold tabular-nums text-slate-950">{formatCurrency.format(amount)}</div>
-                            <div className="text-right text-[11px] text-slate-500">{proPLData.netRevenue > 0 ? `${((amount / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
-                          </div>
-                        )) : (
-                          <div className="py-2 text-[13px] text-slate-500">No direct costs were recorded in the selected reporting period.</div>
                         )}
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 border-t border-slate-200 py-2.5 text-[13px] font-bold text-slate-950">
-                          <div>Total direct costs</div>
-                          <div className="text-right tabular-nums">{formatCurrency.format(proPLData.cogs)}</div>
-                          <div className="text-right text-[11px] text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.cogs / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
-                        </div>
-                        <div className="grid grid-cols-[1fr_110px_64px] gap-4 mt-2 rounded-[3px] bg-blue-50 px-3 py-2.5 text-[13px] font-bold text-slate-950">
-                          <div className="uppercase tracking-[0.08em]">Gross Profit</div>
-                          <div className="text-right tabular-nums">{formatCurrency.format(proPLData.grossProfit)}</div>
-                          <div className="text-right text-[11px]">{proPLData.grossMargin.toFixed(1)}%</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 border border-slate-200 bg-blue-50/40 px-4 py-4 rounded-[3px]">
-                      <div className="text-[18px] font-bold text-slate-950">Revenue Takeaway</div>
-                      <div className="mt-2 text-[11px] leading-5 text-slate-600">
-                        This page summarizes how much gross sales were recorded, how much revenue was reduced by refunds, what direct costs were captured, and the resulting gross profit for the selected reporting window.
-                      </div>
-                    </div>
-
-                    {renderProPLFooter(2)}
-                  </div>
-
-                  <div className="bg-white px-8 pt-8 pb-6 min-h-[1040px] flex flex-col" style={{ breakAfter: 'page', pageBreakAfter: 'always' }}>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">MONIEZI PROFIT &amp; LOSS</div>
-                    <h2 className="mt-6 text-[28px] leading-tight font-extrabold tracking-tight text-slate-950">Operating Expense Breakdown</h2>
-                    <p className="mt-3 max-w-[620px] text-[11px] leading-5 text-slate-500">
-                      Top operating expense categories by dollar amount and share of net revenue for the selected reporting period.
-                    </p>
-
-                    <div className="mt-6 grid grid-cols-3 gap-3">
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Top Expense Category</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{String(proPLExpenseTopRow[0])}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">{formatCurrency.format(Number(proPLExpenseTopRow[1]))} - {proPLTopExpenseShare.toFixed(1)}% of operating expenses.</div>
-                      </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Expense Categories Used</div>
-                        <div className="mt-1.5 text-[28px] leading-none font-extrabold tabular-nums text-slate-950">{Object.keys(proPLData.expensesByCategory).length}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Distinct operating expense categories represented in this statement.</div>
-                      </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Operating Expense Ratio</div>
-                        <div className="mt-1.5 text-[28px] leading-none font-extrabold tabular-nums text-slate-950">{proPLData.netRevenue > 0 ? `${((proPLData.totalOpex / proPLData.netRevenue) * 100).toFixed(1)}%` : '0.0%'}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Operating expenses as a percentage of net revenue.</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 border border-slate-200 bg-white rounded-[3px] overflow-hidden">
-                      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-600">Section 3</div>
-                        <div className="mt-1 text-[18px] font-bold text-slate-950">Operating Expense Breakdown</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Top operating expense categories by dollar amount and category share.</div>
-                      </div>
-                      <div className="px-4 py-3">
-                        <div className="grid grid-cols-[1fr_110px_72px] gap-4 border-b border-slate-200 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                          <div>Expense category</div>
-                          <div className="text-right">Amount</div>
-                          <div className="text-right">Share</div>
-                        </div>
-                        {proPLExpenseDisplayRows.map(([category, amount]) => (
-                          <div key={category} className="grid grid-cols-[1fr_110px_72px] gap-4 border-b border-slate-100 py-2 text-[13px] text-slate-700 last:border-b-0">
-                            <div>{category}</div>
-                            <div className="text-right font-semibold tabular-nums text-slate-950">{formatCurrency.format(amount)}</div>
-                            <div className="text-right text-[11px] text-slate-500">{proPLData.totalOpex > 0 ? `${((amount / proPLData.totalOpex) * 100).toFixed(1)}%` : '—'}</div>
+                        {proPLData.refunds > 0 && (
+                          <div className="flex items-center py-2 mt-1 rounded-2xl bg-red-50 px-3 text-red-700">
+                            <div className="flex-1 italic">Less: Returns &amp; Refunds</div>
+                            <div className="w-28 text-right font-semibold tabular-nums">({formatCurrency.format(proPLData.refunds)})</div>
+                            <div className="w-16 text-right text-xs"> </div>
                           </div>
-                        ))}
-                        <div className="grid grid-cols-[1fr_110px_72px] gap-4 border-t border-slate-200 py-2.5 text-[13px] font-bold text-red-700">
-                          <div>Total operating expenses</div>
-                          <div className="text-right tabular-nums">{formatCurrency.format(proPLData.totalOpex)}</div>
-                          <div className="text-right text-[11px]">{proPLData.netRevenue > 0 ? `${((proPLData.totalOpex / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                        )}
+                        <div className="flex items-center py-3 mt-3 rounded-2xl bg-emerald-50 px-4 font-bold text-emerald-900">
+                          <div className="flex-1 uppercase tracking-[0.12em] text-sm">Net Revenue</div>
+                          <div className="w-28 text-right tabular-nums text-lg">{formatCurrency.format(proPLData.netRevenue)}</div>
+                          <div className="w-16 text-right text-xs">100.0%</div>
                         </div>
-                        <div className="grid grid-cols-[1fr_110px_72px] gap-4 mt-2 rounded-[3px] bg-blue-50 px-3 py-2.5 text-[13px] font-bold text-slate-950">
-                          <div className="uppercase tracking-[0.08em]">Operating Income</div>
-                          <div className={`text-right tabular-nums ${proPLData.operatingIncome >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                      </div>
+                    </div>
+
+                    {proPLData.cogs > 0 && (
+                      <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden mb-5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                        <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+                          <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">Section 2</div>
+                          <div className="mt-1 text-lg font-bold text-slate-950">Direct Costs &amp; Gross Profit</div>
+                          <div className="mt-1 text-xs text-slate-500">Direct costs recorded as cost of goods sold and the resulting gross profit position.</div>
+                        </div>
+                        <div className="px-5 py-4">
+                          <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 border-b border-slate-200 pb-2 mb-2">
+                            <div className="flex-1 min-w-0">Account</div>
+                            <div className="w-28 text-right flex-shrink-0">Amount</div>
+                            <div className="w-16 text-right flex-shrink-0">% Rev</div>
+                          </div>
+                          {Object.entries(proPLData.cogsByCategory)
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([category, amount]) => (
+                              <div key={category} className="flex items-center py-2 border-b border-slate-100 last:border-b-0">
+                                <div className="flex-1 pr-4 text-slate-700">{category}</div>
+                                <div className="w-28 text-right font-semibold tabular-nums text-slate-950">{formatCurrency.format(amount)}</div>
+                                <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((amount / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                              </div>
+                            ))}
+                          <div className="flex items-center py-2 mt-2 font-bold border-t border-slate-200 text-slate-900">
+                            <div className="flex-1">Total COGS</div>
+                            <div className="w-28 text-right tabular-nums">{formatCurrency.format(proPLData.cogs)}</div>
+                            <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.cogs / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                          </div>
+                          <div className="flex items-center py-3 mt-3 rounded-2xl bg-blue-50 px-4 font-bold text-slate-900">
+                            <div className="flex-1 uppercase tracking-[0.12em] text-sm">Gross Profit</div>
+                            <div className="w-28 text-right tabular-nums text-lg">{formatCurrency.format(proPLData.grossProfit)}</div>
+                            <div className="w-16 text-right text-xs">{proPLData.grossMargin.toFixed(1)}%</div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden mb-5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">Section {proPLData.cogs > 0 ? '3' : '2'}</div>
+                        <div className="mt-1 text-lg font-bold text-slate-950">Operating Expense Structure</div>
+                        <div className="mt-1 text-xs text-slate-500">Grouped operating expenses organized into accountant-friendly buckets.</div>
+                      </div>
+                      <div className="px-5 py-4">
+                        <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 border-b border-slate-200 pb-2 mb-2">
+                          <div className="flex-1 min-w-0">Account</div>
+                          <div className="w-28 text-right flex-shrink-0">Amount</div>
+                          <div className="w-16 text-right flex-shrink-0">% Rev</div>
+                        </div>
+
+                        {proPLData.payrollTotal > 0 && (
+                          <>
+                            <div className="flex items-center py-2 font-bold rounded-2xl bg-slate-50 px-4 mt-2">
+                              <div className="flex-1 text-slate-900">Payroll &amp; Labor</div>
+                              <div className="w-28 text-right tabular-nums text-slate-900">{formatCurrency.format(proPLData.payrollTotal)}</div>
+                              <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.payrollTotal / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                            </div>
+                            {proPLData.payrollItems.map(([cat, amt]) => (
+                              <div key={cat} className="flex items-center py-1.5 border-b border-slate-100 last:border-b-0">
+                                <div className="flex-1 pl-4 pr-4 text-slate-600">{cat}</div>
+                                <div className="w-28 text-right tabular-nums text-slate-700">{formatCurrency.format(amt)}</div>
+                                <div className="w-16 text-right text-xs text-slate-400">{proPLData.netRevenue > 0 ? `${((amt / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {proPLData.occupancyTotal > 0 && (
+                          <>
+                            <div className="flex items-center py-2 font-bold rounded-2xl bg-slate-50 px-4 mt-3">
+                              <div className="flex-1 text-slate-900">Occupancy &amp; Facilities</div>
+                              <div className="w-28 text-right tabular-nums text-slate-900">{formatCurrency.format(proPLData.occupancyTotal)}</div>
+                              <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.occupancyTotal / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                            </div>
+                            {proPLData.occupancyItems.map(([cat, amt]) => (
+                              <div key={cat} className="flex items-center py-1.5 border-b border-slate-100 last:border-b-0">
+                                <div className="flex-1 pl-4 pr-4 text-slate-600">{cat}</div>
+                                <div className="w-28 text-right tabular-nums text-slate-700">{formatCurrency.format(amt)}</div>
+                                <div className="w-16 text-right text-xs text-slate-400">{proPLData.netRevenue > 0 ? `${((amt / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {proPLData.marketingTotal > 0 && (
+                          <>
+                            <div className="flex items-center py-2 font-bold rounded-2xl bg-slate-50 px-4 mt-3">
+                              <div className="flex-1 text-slate-900">Marketing &amp; Advertising</div>
+                              <div className="w-28 text-right tabular-nums text-slate-900">{formatCurrency.format(proPLData.marketingTotal)}</div>
+                              <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.marketingTotal / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                            </div>
+                            {proPLData.marketingItems.map(([cat, amt]) => (
+                              <div key={cat} className="flex items-center py-1.5 border-b border-slate-100 last:border-b-0">
+                                <div className="flex-1 pl-4 pr-4 text-slate-600">{cat}</div>
+                                <div className="w-28 text-right tabular-nums text-slate-700">{formatCurrency.format(amt)}</div>
+                                <div className="w-16 text-right text-xs text-slate-400">{proPLData.netRevenue > 0 ? `${((amt / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {proPLData.gaTotal > 0 && (
+                          <>
+                            <div className="flex items-center py-2 font-bold rounded-2xl bg-slate-50 px-4 mt-3">
+                              <div className="flex-1 text-slate-900">General &amp; Administrative</div>
+                              <div className="w-28 text-right tabular-nums text-slate-900">{formatCurrency.format(proPLData.gaTotal)}</div>
+                              <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.gaTotal / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                            </div>
+                            {proPLData.gaItems.map(([cat, amt]) => (
+                              <div key={cat} className="flex items-center py-1.5 border-b border-slate-100 last:border-b-0">
+                                <div className="flex-1 pl-4 pr-4 text-slate-600">{cat}</div>
+                                <div className="w-28 text-right tabular-nums text-slate-700">{formatCurrency.format(amt)}</div>
+                                <div className="w-16 text-right text-xs text-slate-400">{proPLData.netRevenue > 0 ? `${((amt / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                              </div>
+                            ))}
+                          </>
+                        )}
+
+                        {proPLData.otherExpenses > 0 && (
+                          <div className="flex items-center py-2 font-bold rounded-2xl bg-slate-50 px-4 mt-3">
+                            <div className="flex-1 text-slate-900">Other Expenses</div>
+                            <div className="w-28 text-right tabular-nums text-slate-900">{formatCurrency.format(proPLData.otherExpenses)}</div>
+                            <div className="w-16 text-right text-xs text-slate-500">{proPLData.netRevenue > 0 ? `${((proPLData.otherExpenses / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center py-3 mt-4 rounded-2xl bg-red-50 px-4 font-bold text-red-800">
+                          <div className="flex-1 uppercase tracking-[0.12em] text-sm">Total Operating Expenses</div>
+                          <div className="w-28 text-right tabular-nums text-lg">{formatCurrency.format(proPLData.totalOpex)}</div>
+                          <div className="w-16 text-right text-xs">{proPLData.netRevenue > 0 ? `${((proPLData.totalOpex / proPLData.netRevenue) * 100).toFixed(1)}%` : '—'}</div>
+                        </div>
+
+                        <div className="flex items-center py-3 mt-3 rounded-2xl bg-slate-100 px-4 font-bold text-slate-900">
+                          <div className="flex-1 uppercase tracking-[0.12em] text-sm">Operating Income</div>
+                          <div className={`w-28 text-right tabular-nums text-lg ${proPLData.operatingIncome >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                             {proPLData.operatingIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.operatingIncome))})` : formatCurrency.format(proPLData.operatingIncome)}
                           </div>
-                          <div className="text-right text-[11px]">{proPLData.operatingMargin.toFixed(1)}%</div>
+                          <div className="w-16 text-right text-xs">{proPLData.operatingMargin.toFixed(1)}%</div>
                         </div>
                       </div>
                     </div>
 
-                    {renderProPLFooter(3)}
-                  </div>
-
-                  <div className="bg-white px-8 pt-8 pb-6 min-h-[1040px] flex flex-col">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-blue-600">MONIEZI PROFIT &amp; LOSS</div>
-                    <h2 className="mt-6 text-[28px] leading-tight font-extrabold tracking-tight text-slate-950">Net Income, Notes &amp; Handoff</h2>
-                    <p className="mt-3 max-w-[620px] text-[11px] leading-5 text-slate-500">
-                      Other income or expense, final statement checks, and handoff notes for accountant review.
-                    </p>
-
-                    <div className="mt-4 flex justify-end">
-                      <div className="w-[220px] border border-blue-100 bg-blue-50/70 px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Reporting Period</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{proPLDateRangeLabel}</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 grid grid-cols-2 gap-3">
-                      <div className="border border-slate-200 bg-white rounded-[3px] overflow-hidden">
-                        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-600">Section 4</div>
-                          <div className="mt-1 text-[18px] font-bold text-slate-950">Other Income / Expense</div>
-                          <div className="mt-1 text-[10px] leading-4 text-slate-500">Below-the-line items that sit outside core operating activity.</div>
+                    {(proPLData.interestIncome > 0 || proPLData.interestExpense > 0) && (
+                      <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden mb-5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                        <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+                          <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">Section {proPLData.cogs > 0 ? '4' : '3'}</div>
+                          <div className="mt-1 text-lg font-bold text-slate-950">Other Income / Expense</div>
+                          <div className="mt-1 text-xs text-slate-500">Below-the-line income and expense items that sit outside core operating activity.</div>
                         </div>
-                        <div className="px-4 py-3 text-[13px]">
-                          <div className="grid grid-cols-[1fr_110px] gap-4 border-b border-slate-200 pb-2 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">
-                            <div>Account</div>
-                            <div className="text-right">Amount</div>
+                        <div className="px-5 py-4">
+                          <div className="flex items-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500 border-b border-slate-200 pb-2 mb-2">
+                            <div className="flex-1 min-w-0">Account</div>
+                            <div className="w-28 text-right flex-shrink-0">Amount</div>
+                            <div className="w-16 text-right flex-shrink-0"> </div>
                           </div>
                           {proPLData.interestIncome > 0 && (
-                            <div className="grid grid-cols-[1fr_110px] gap-4 border-b border-slate-100 py-2 text-slate-700">
-                              <div>Interest Income</div>
-                              <div className="text-right font-semibold tabular-nums text-emerald-700">{formatCurrency.format(proPLData.interestIncome)}</div>
+                            <div className="flex items-center py-2 border-b border-slate-100">
+                              <div className="flex-1 pr-4 text-slate-700">Interest Income</div>
+                              <div className="w-28 text-right font-semibold tabular-nums text-emerald-700">{formatCurrency.format(proPLData.interestIncome)}</div>
+                              <div className="w-16 text-right text-xs text-slate-400"> </div>
                             </div>
                           )}
                           {proPLData.interestExpense > 0 && (
-                            <div className="grid grid-cols-[1fr_110px] gap-4 border-b border-slate-100 py-2 text-slate-700">
-                              <div>Interest Expense</div>
-                              <div className="text-right font-semibold tabular-nums text-red-700">({formatCurrency.format(proPLData.interestExpense)})</div>
+                            <div className="flex items-center py-2 border-b border-slate-100">
+                              <div className="flex-1 pr-4 text-slate-700">Interest Expense</div>
+                              <div className="w-28 text-right font-semibold tabular-nums text-red-700">({formatCurrency.format(proPLData.interestExpense)})</div>
+                              <div className="w-16 text-right text-xs text-slate-400"> </div>
                             </div>
                           )}
-                          {proPLData.interestIncome <= 0 && proPLData.interestExpense <= 0 && (
-                            <div className="py-2 text-slate-500">No other income or expense items were recorded in this period.</div>
-                          )}
-                          <div className="grid grid-cols-[1fr_110px] gap-4 mt-2 rounded-[3px] bg-emerald-50 px-3 py-2.5 font-bold text-emerald-800">
-                            <div className="uppercase tracking-[0.08em]">Net Other Income</div>
-                            <div className="text-right tabular-nums">{proPLData.netOtherIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.netOtherIncome))})` : formatCurrency.format(proPLData.netOtherIncome)}</div>
+                          <div className="flex items-center py-3 mt-3 rounded-2xl bg-emerald-50 px-4 font-bold text-slate-900">
+                            <div className="flex-1 uppercase tracking-[0.12em] text-sm">Net Other Income</div>
+                            <div className={`w-28 text-right tabular-nums text-lg ${proPLData.netOtherIncome >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                              {proPLData.netOtherIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.netOtherIncome))})` : formatCurrency.format(proPLData.netOtherIncome)}
+                            </div>
+                            <div className="w-16 text-right text-xs"> </div>
                           </div>
                         </div>
                       </div>
+                    )}
 
-                      <div className="border border-slate-200 bg-white rounded-[3px] overflow-hidden">
-                        <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-600">Section 5</div>
-                          <div className="mt-1 text-[18px] font-bold text-slate-950">Statement Checks Before Handoff</div>
-                          <div className="mt-1 text-[10px] leading-4 text-slate-500">Items to confirm before handing this statement to your accountant or reviewer.</div>
-                        </div>
-                        <div className="px-4 py-3 text-[12px] leading-6 text-slate-700">
-                          <ul className="space-y-3 list-disc pl-4 marker:text-blue-600">
-                            {proPLReviewItems.map((item) => (
-                              <li key={item}>{item}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 border border-slate-200 bg-blue-50/40 px-4 py-4 rounded-[3px]">
-                      <div className="text-[18px] font-bold text-slate-950">Pre-Filing Note</div>
-                      <div className="mt-2 text-[11px] leading-5 text-slate-600">
-                        MONIEZI prepared this profit and loss statement from recorded ledger activity for the selected reporting period. Use it as a clear summary of gross sales, net revenue, direct costs, operating expenses, and final net income. Final classification decisions, adjusting entries, and tax treatment should still be reviewed with your accountant or tax professional.
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3">
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Prepared By</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{settings.ownerName || 'Owner'}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Name shown for statement reference only. Data remains stored locally.</div>
-                      </div>
-                      <div className="border border-slate-200 bg-white px-4 py-3 rounded-[3px]">
-                        <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-slate-500">Generated</div>
-                        <div className="mt-1.5 text-[14px] font-bold text-slate-950">{proPLGeneratedAtLabel}</div>
-                        <div className="mt-1 text-[10px] leading-4 text-slate-500">Export timestamp for this statement package.</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 border border-slate-200 bg-slate-950 px-4 py-4 rounded-[3px] text-white">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-200">Final Result</div>
+                    <div className="rounded-3xl bg-slate-950 text-white px-5 py-5 mb-5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-200">Final Result</div>
                       <div className="mt-2 flex items-end justify-between gap-4">
                         <div>
-                          <div className="text-[28px] font-extrabold tracking-tight">Net Income</div>
-                          <div className="mt-1 text-[11px] leading-5 text-slate-300">After direct costs, operating expenses, and other income or expense.</div>
+                          <div className="text-2xl font-extrabold uppercase tracking-tight">Net Income</div>
+                          <div className="mt-1 text-sm text-slate-300">After direct costs, operating expenses, and other income or expense.</div>
                         </div>
                         <div className="text-right">
-                          <div className={`text-[32px] leading-none font-extrabold tabular-nums ${proPLData.netIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <div className={`text-[30px] font-extrabold tabular-nums ${proPLData.netIncome >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                             {proPLData.netIncome < 0 ? `(${formatCurrency.format(Math.abs(proPLData.netIncome))})` : formatCurrency.format(proPLData.netIncome)}
                           </div>
-                          <div className="mt-1 text-[10px] uppercase tracking-[0.08em] text-slate-300">Net Margin {proPLData.netMargin.toFixed(1)}%</div>
+                          <div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-300">Net Margin {proPLData.netMargin.toFixed(1)}%</div>
                         </div>
                       </div>
                     </div>
 
-                    {renderProPLFooter(4)}
+                    <div className="rounded-3xl border border-slate-200 bg-white overflow-hidden" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                      <div className="px-5 py-4 bg-slate-50 border-b border-slate-200">
+                        <div className="text-[11px] font-bold uppercase tracking-[0.22em] text-blue-700">Statement Notes</div>
+                        <div className="mt-1 text-lg font-bold text-slate-950">Readiness &amp; Accounting Notes</div>
+                        <div className="mt-1 text-xs text-slate-500">Supporting notes to accompany this statement when sharing with an accountant or internal reviewer.</div>
+                      </div>
+                      <div className="px-5 py-4 text-sm text-slate-600 leading-6">
+                        <p>- {plAccountingBasis === 'cash' ? 'Cash' : 'Accrual'} basis applied to this statement.</p>
+                        <p>- {proPLData.transactionCount} transactions included in the selected reporting window.</p>
+                        {proPLData.uncategorizedCount > 0 ? (
+                          <p className="text-amber-700">- {proPLData.uncategorizedCount} uncategorized entries totaling {formatCurrency.format(proPLData.uncategorizedAmount)} should be reviewed.</p>
+                        ) : (
+                          <p>- No uncategorized entries were detected in this reporting period.</p>
+                        )}
+                        <p>- Owner draws excluded. Management-use report prepared from local MONIEZI records.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border-t border-slate-200 px-6 sm:px-8 py-4 text-xs text-slate-500 flex items-center justify-between gap-4">
+                    <div>MONIEZI Pro Finance | Generated privately from your local business records.</div>
+                    <div>{settings.businessName} | P&amp;L | {proPLData.periodLabel}</div>
                   </div>
                 </div>
               </div>

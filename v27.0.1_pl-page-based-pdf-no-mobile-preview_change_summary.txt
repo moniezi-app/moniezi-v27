@@ -1,0 +1,8 @@
+MONIEZI v27.0.1
+
+Changes:
+- Removed the P&L mobile HTML preview flow from the main reports action path.
+- Replaced P&L export generation with a page-based PDF generator using pdf-lib.
+- Added direct Share PDF and Download PDF actions on the P&L card.
+- Aligned the P&L PDF structure more closely with the Tax Prep Package approach.
+- Fixed the prior blank-space / broken pagination behavior caused by DOM-based export.
