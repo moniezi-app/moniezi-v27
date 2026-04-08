@@ -4451,7 +4451,6 @@ const demoMileageTrips: MileageTrip[] = [
   const buildStyledSpreadsheetBuffer = async ({
     sheetName,
     title,
-    subtitle,
     fileLabel,
     columns,
     rows,
@@ -4460,7 +4459,6 @@ const demoMileageTrips: MileageTrip[] = [
   }: {
     sheetName: string;
     title: string;
-    subtitle: string;
     fileLabel: string;
     columns: { header: string; key: string; width: number }[];
     rows: any[][];
@@ -4471,16 +4469,16 @@ const demoMileageTrips: MileageTrip[] = [
     const endColumnLetter = getExcelColumnName(columns.length);
     const now = new Date();
     const generatedLabel = `Generated ${now.toLocaleString()}`;
-    const footerRowNumber = 6 + rows.length + 2;
-    const dataEndRowNumber = Math.max(6, 6 + rows.length);
-    const dimensionRef = `A1:${endColumnLetter}${footerRowNumber}`;
+    const headerRowNumber = 5;
+    const dataStartRowNumber = headerRowNumber + 1;
+    const dataEndRowNumber = Math.max(headerRowNumber, headerRowNumber + rows.length);
+    const lastRowNumber = Math.max(dataEndRowNumber, headerRowNumber);
+    const dimensionRef = `A1:${endColumnLetter}${lastRowNumber}`;
     const mergeRefs = [
       `A1:${endColumnLetter}1`,
-      `A2:${endColumnLetter}2`,
-      `A4:B4`,
-      `C4:E4`,
-      `F4:${endColumnLetter}4`,
-      `A${footerRowNumber}:${endColumnLetter}${footerRowNumber}`,
+      `A3:B3`,
+      `C3:E3`,
+      `F3:${endColumnLetter}3`,
     ];
 
     const makeCellXml = ({
@@ -4508,23 +4506,22 @@ const demoMileageTrips: MileageTrip[] = [
 
     const rowXml: string[] = [];
     rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 28));
-    rowXml.push(makeRowXml(2, [makeCellXml({ ref: 'A2', style: 2, value: subtitle, type: 'inlineStr' })], 22));
-    rowXml.push('<row r="3"/>');
-    rowXml.push(makeRowXml(4, [
-      makeCellXml({ ref: 'A4', style: 3, value: 'MONIEZI Pro Finance', type: 'inlineStr' }),
-      makeCellXml({ ref: 'C4', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
-      makeCellXml({ ref: 'F4', style: 5, value: generatedLabel, type: 'inlineStr' }),
+    rowXml.push('<row r="2"/>');
+    rowXml.push(makeRowXml(3, [
+      makeCellXml({ ref: 'A3', style: 3, value: 'MONIEZI Pro Finance', type: 'inlineStr' }),
+      makeCellXml({ ref: 'C3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
+      makeCellXml({ ref: 'F3', style: 5, value: generatedLabel, type: 'inlineStr' }),
     ]));
-    rowXml.push('<row r="5"/>');
-    rowXml.push(makeRowXml(6, columns.map((column, index) => makeCellXml({
-      ref: `${getExcelColumnName(index + 1)}6`,
+    rowXml.push('<row r="4"/>');
+    rowXml.push(makeRowXml(headerRowNumber, columns.map((column, index) => makeCellXml({
+      ref: `${getExcelColumnName(index + 1)}${headerRowNumber}`,
       style: 6,
       value: column.header,
       type: 'inlineStr',
     })), 22));
 
     rows.forEach((rowValues, rowIndex) => {
-      const excelRowNumber = 7 + rowIndex;
+      const excelRowNumber = dataStartRowNumber + rowIndex;
       const isAlt = rowIndex % 2 === 1;
       const cells = rowValues.map((rawValue, columnIndex) => {
         const ref = `${getExcelColumnName(columnIndex + 1)}${excelRowNumber}`;
@@ -4544,15 +4541,6 @@ const demoMileageTrips: MileageTrip[] = [
       rowXml.push(makeRowXml(excelRowNumber, cells, 20));
     });
 
-    rowXml.push(makeRowXml(footerRowNumber, [
-      makeCellXml({
-        ref: `A${footerRowNumber}`,
-        style: 13,
-        value: `${fileLabel} • Local raw-data export from MONIEZI. Use CSV for imports and XLSX for human-readable review.`,
-        type: 'inlineStr',
-      }),
-    ]));
-
     const colsXml = columns
       .map((column, index) => `<col min="${index + 1}" max="${index + 1}" width="${column.width}" customWidth="1"/>`)
       .join('');
@@ -4560,11 +4548,11 @@ const demoMileageTrips: MileageTrip[] = [
     const sheetXml = makeXmlFile(
       `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
         `<dimension ref="${dimensionRef}"/>` +
-        `<sheetViews><sheetView workbookViewId="0"><pane ySplit="6" topLeftCell="A7" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A7" sqref="A7"/></sheetView></sheetViews>` +
+        `<sheetViews><sheetView workbookViewId="0"><pane ySplit="${headerRowNumber}" topLeftCell="A${dataStartRowNumber}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A${dataStartRowNumber}" sqref="A${dataStartRowNumber}"/></sheetView></sheetViews>` +
         `<sheetFormatPr defaultRowHeight="15"/>` +
         `<cols>${colsXml}</cols>` +
         `<sheetData>${rowXml.join('')}</sheetData>` +
-        `<autoFilter ref="A6:${endColumnLetter}${dataEndRowNumber}"/>` +
+        `<autoFilter ref="A${headerRowNumber}:${endColumnLetter}${dataEndRowNumber}"/>` +
         `<mergeCells count="${mergeRefs.length}">${mergeRefs.map(ref => `<mergeCell ref="${ref}"/>`).join('')}</mergeCells>` +
       `</worksheet>`
     );
@@ -4575,10 +4563,10 @@ const demoMileageTrips: MileageTrip[] = [
         `<fonts count="9">` +
           `<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="18"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><sz val="11"/><color rgb="FF334155"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="11"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="10"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><sz val="10"/><color rgb="FF334155"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="10"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><i/><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/><family val="2"/></font>` +
@@ -4587,13 +4575,13 @@ const demoMileageTrips: MileageTrip[] = [
           `<fill><patternFill patternType="none"/></fill>` +
           `<fill><patternFill patternType="gray125"/></fill>` +
           `<fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>` +
-          `<fill><patternFill patternType="solid"><fgColor rgb="FF0F172A"/><bgColor indexed="64"/></patternFill></fill>` +
+          `<fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/><bgColor indexed="64"/></patternFill></fill>` +
           `<fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>` +
         `</fills>` +
         `<borders count="4">` +
           `<border><left/><right/><top/><bottom/><diagonal/></border>` +
           `<border><left style="thin"><color rgb="FFE2E8F0"/></left><right style="thin"><color rgb="FFE2E8F0"/></right><top style="thin"><color rgb="FFE2E8F0"/></top><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>` +
-          `<border><left/><right/><top style="thin"><color rgb="FF0F172A"/></top><bottom style="thin"><color rgb="FF0F172A"/></bottom><diagonal/></border>` +
+          `<border><left/><right/><top style="thin"><color rgb="FF2563EB"/></top><bottom style="thin"><color rgb="FF2563EB"/></bottom><diagonal/></border>` +
           `<border><left/><right/><top/><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>` +
         `</borders>` +
         `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
@@ -4707,7 +4695,6 @@ const demoMileageTrips: MileageTrip[] = [
       const buffer = await buildStyledSpreadsheetBuffer({
         sheetName: 'Tax Ledger',
         title: 'MONIEZI Tax Ledger Export',
-        subtitle: 'Polished spreadsheet view of your yearly ledger export. Use CSV for direct import workflows and XLSX for review, filtering, and handoff.',
         fileLabel: `Tax Ledger ${taxPrepYear}`,
         columns: [
           { header: 'Date', key: 'date', width: 14 },
@@ -4752,7 +4739,6 @@ const demoMileageTrips: MileageTrip[] = [
       const buffer = await buildStyledSpreadsheetBuffer({
         sheetName: 'Mileage',
         title: 'MONIEZI Mileage Export',
-        subtitle: 'Polished spreadsheet view of your business mileage log. Use CSV for raw data workflows and XLSX for review or accountant handoff.',
         fileLabel: `Mileage ${taxPrepYear}`,
         columns: [
           { header: 'Date', key: 'date', width: 14 },
@@ -7652,7 +7638,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Mileage</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export clean CSV or polished spreadsheet files for your accountant.</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export clean CSV or spreadsheet files for your accountant.</p>
                 </div>
                 <div className="flex gap-2">
                   <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
@@ -9023,7 +9009,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                         <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-200">MONIEZI PROFIT &amp; LOSS</div>
                         <h1 className="mt-3 text-[28px] leading-tight font-extrabold tracking-tight">Premium Business Statement</h1>
                         <p className="mt-2 max-w-[480px] text-sm leading-6 text-slate-300">
-                          A polished operating statement summarizing revenue, direct costs, operating expenses, and net income from your local MONIEZI records.
+                          A clean operating statement summarizing revenue, direct costs, operating expenses, and net income from your local MONIEZI records.
                         </p>
                       </div>
                       {settings.businessLogo && (
