@@ -1,0 +1,7 @@
+MONIEZI v27.0.5
+
+- Kept CSV exports raw and machine-friendly while improving export headers and numeric/date formatting.
+- Added polished spreadsheet exports for Tax Ledger and Mileage without introducing a new npm dependency.
+- Replaced the previous ExcelJS-based XLSX path with an internal offline XLSX generator to avoid the GitHub Actions npm ci failure path.
+- Kept GitHub Pages workflow pinned to Node 20 without npm cache for safer CI installs.
+- Bumped app version to 27.0.5 and refreshed the service worker cache key.

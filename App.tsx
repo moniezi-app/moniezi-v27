@@ -397,6 +397,34 @@ const createZipBlobUncompressed = (files: { name: string; data: Uint8Array; mtim
 };
 
 
+const escapeXml = (value: string) => {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+};
+
+const getExcelColumnName = (index: number) => {
+  let n = index;
+  let result = '';
+  while (n > 0) {
+    const remainder = (n - 1) % 26;
+    result = String.fromCharCode(65 + remainder) + result;
+    n = Math.floor((n - 1) / 26);
+  }
+  return result;
+};
+
+const sanitizeSheetName = (value: string) => {
+  const cleaned = String(value || 'Sheet1').replace(/[\\/*?:\[\]]/g, ' ').trim();
+  return (cleaned || 'Sheet1').slice(0, 31);
+};
+
+const makeXmlFile = (body: string) => utf8(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${body}`);
+
+
 // --- Utility: Date Helpers ---
 const getStartOfWeek = (date: Date) => {
   const d = new Date(date);
@@ -4439,144 +4467,221 @@ const demoMileageTrips: MileageTrip[] = [
     currencyColumns?: string[];
     decimalColumns?: string[];
   }) => {
-    const ExcelJS = await import('exceljs');
-    const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'MONIEZI';
-    workbook.company = 'MONIEZI';
-    workbook.created = new Date();
-    workbook.modified = new Date();
-    workbook.title = title;
-    workbook.subject = fileLabel;
+    const safeSheetName = sanitizeSheetName(sheetName);
+    const endColumnLetter = getExcelColumnName(columns.length);
+    const now = new Date();
+    const generatedLabel = `Generated ${now.toLocaleString()}`;
+    const footerRowNumber = 6 + rows.length + 2;
+    const dataEndRowNumber = Math.max(6, 6 + rows.length);
+    const dimensionRef = `A1:${endColumnLetter}${footerRowNumber}`;
+    const mergeRefs = [
+      `A1:${endColumnLetter}1`,
+      `A2:${endColumnLetter}2`,
+      `A4:B4`,
+      `C4:E4`,
+      `F4:${endColumnLetter}4`,
+      `A${footerRowNumber}:${endColumnLetter}${footerRowNumber}`,
+    ];
 
-    const worksheet = workbook.addWorksheet(sheetName, {
-      views: [{ state: 'frozen', ySplit: 6, showGridLines: false }],
-    });
-
-    const endColumnLetter = (() => {
-      let index = columns.length;
-      let result = '';
-      while (index > 0) {
-        const remainder = (index - 1) % 26;
-        result = String.fromCharCode(65 + remainder) + result;
-        index = Math.floor((index - 1) / 26);
+    const makeCellXml = ({
+      ref,
+      style,
+      value,
+      type,
+    }: {
+      ref: string;
+      style: number;
+      value: string | number;
+      type: 'inlineStr' | 'n';
+    }) => {
+      if (type === 'n') {
+        return `<c r="${ref}" s="${style}"><v>${value}</v></c>`;
       }
-      return result;
-    })();
-
-    const brandBlue = 'FF2563EB';
-    const slate900 = 'FF0F172A';
-    const slate700 = 'FF334155';
-    const slate500 = 'FF64748B';
-    const slate200 = 'FFE2E8F0';
-    const slate100 = 'FFF8FAFC';
-    const cardFill = 'FFF8FAFC';
-
-    worksheet.columns = columns.map(column => ({ key: column.key, width: column.width }));
-
-    worksheet.mergeCells(`A1:${endColumnLetter}1`);
-    worksheet.getCell('A1').value = title;
-    worksheet.getCell('A1').font = { name: 'Aptos', size: 18, bold: true, color: { argb: slate900 } };
-    worksheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
-    worksheet.getRow(1).height = 28;
-
-    worksheet.mergeCells(`A2:${endColumnLetter}2`);
-    worksheet.getCell('A2').value = subtitle;
-    worksheet.getCell('A2').font = { name: 'Aptos', size: 11, color: { argb: slate700 } };
-    worksheet.getCell('A2').alignment = { wrapText: true };
-    worksheet.getRow(2).height = 22;
-
-    worksheet.mergeCells('A4:B4');
-    worksheet.getCell('A4').value = 'MONIEZI Pro Finance';
-    worksheet.getCell('A4').font = { name: 'Aptos', size: 10, bold: true, color: { argb: brandBlue } };
-    worksheet.getCell('A4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
-    worksheet.getCell('A4').border = {
-      top: { style: 'thin', color: { argb: slate200 } },
-      left: { style: 'thin', color: { argb: slate200 } },
-      bottom: { style: 'thin', color: { argb: slate200 } },
-      right: { style: 'thin', color: { argb: slate200 } },
+      return `<c r="${ref}" s="${style}" t="inlineStr"><is><t xml:space="preserve">${escapeXml(String(value ?? ''))}</t></is></c>`;
     };
 
-    worksheet.mergeCells('C4:E4');
-    worksheet.getCell('C4').value = `Tax Year ${taxPrepYear}`;
-    worksheet.getCell('C4').font = { name: 'Aptos', size: 10, bold: true, color: { argb: slate900 } };
-    worksheet.getCell('C4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
-    worksheet.getCell('C4').border = {
-      top: { style: 'thin', color: { argb: slate200 } },
-      left: { style: 'thin', color: { argb: slate200 } },
-      bottom: { style: 'thin', color: { argb: slate200 } },
-      right: { style: 'thin', color: { argb: slate200 } },
+    const makeRowXml = (rowNumber: number, cells: string[], height?: number) => {
+      const attrs = [`r="${rowNumber}"`];
+      if (height) attrs.push(`ht="${height}"`, 'customHeight="1"');
+      return `<row ${attrs.join(' ')}>${cells.join('')}</row>`;
     };
 
-    worksheet.mergeCells(`F4:${endColumnLetter}4`);
-    worksheet.getCell('F4').value = `Generated ${new Date().toLocaleString()}`;
-    worksheet.getCell('F4').font = { name: 'Aptos', size: 10, color: { argb: slate700 } };
-    worksheet.getCell('F4').alignment = { horizontal: 'right' };
-    worksheet.getCell('F4').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: cardFill } };
-    worksheet.getCell('F4').border = {
-      top: { style: 'thin', color: { argb: slate200 } },
-      left: { style: 'thin', color: { argb: slate200 } },
-      bottom: { style: 'thin', color: { argb: slate200 } },
-      right: { style: 'thin', color: { argb: slate200 } },
-    };
-
-    const headerRowNumber = 6;
-    const headerRow = worksheet.getRow(headerRowNumber);
-    columns.forEach((column, index) => {
-      const cell = headerRow.getCell(index + 1);
-      cell.value = column.header;
-      cell.font = { name: 'Aptos', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slate900 } };
-      cell.alignment = { vertical: 'middle', horizontal: 'left' };
-      cell.border = {
-        top: { style: 'thin', color: { argb: slate900 } },
-        bottom: { style: 'thin', color: { argb: slate900 } },
-      };
-    });
-    headerRow.height = 22;
-    worksheet.autoFilter = {
-      from: { row: headerRowNumber, column: 1 },
-      to: { row: headerRowNumber, column: columns.length },
-    };
+    const rowXml: string[] = [];
+    rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 28));
+    rowXml.push(makeRowXml(2, [makeCellXml({ ref: 'A2', style: 2, value: subtitle, type: 'inlineStr' })], 22));
+    rowXml.push('<row r="3"/>');
+    rowXml.push(makeRowXml(4, [
+      makeCellXml({ ref: 'A4', style: 3, value: 'MONIEZI Pro Finance', type: 'inlineStr' }),
+      makeCellXml({ ref: 'C4', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
+      makeCellXml({ ref: 'F4', style: 5, value: generatedLabel, type: 'inlineStr' }),
+    ]));
+    rowXml.push('<row r="5"/>');
+    rowXml.push(makeRowXml(6, columns.map((column, index) => makeCellXml({
+      ref: `${getExcelColumnName(index + 1)}6`,
+      style: 6,
+      value: column.header,
+      type: 'inlineStr',
+    })), 22));
 
     rows.forEach((rowValues, rowIndex) => {
-      const row = worksheet.addRow(rowValues);
-      row.height = 20;
-      row.eachCell((cell, colNumber) => {
-        cell.font = { name: 'Aptos', size: 10, color: { argb: slate900 } };
-        cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-        cell.border = {
-          bottom: { style: 'thin', color: { argb: slate200 } },
-        };
-        if (rowIndex % 2 === 1) {
-          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: slate100 } };
+      const excelRowNumber = 7 + rowIndex;
+      const isAlt = rowIndex % 2 === 1;
+      const cells = rowValues.map((rawValue, columnIndex) => {
+        const ref = `${getExcelColumnName(columnIndex + 1)}${excelRowNumber}`;
+        const columnKey = columns[columnIndex]?.key;
+        const numericValue = Number(rawValue);
+        if (currencyColumns.includes(columnKey) && Number.isFinite(numericValue)) {
+          return makeCellXml({ ref, style: isAlt ? 10 : 9, value: numericValue, type: 'n' });
         }
-
-        const columnKey = columns[colNumber - 1]?.key;
-        if (currencyColumns.includes(columnKey) && typeof cell.value === 'number') {
-          cell.numFmt = '$#,##0.00';
-          cell.font = { name: 'Aptos', size: 10, color: { argb: slate900 } };
-          cell.alignment = { vertical: 'top', horizontal: 'right' };
-        } else if (decimalColumns.includes(columnKey) && typeof cell.value === 'number') {
-          cell.numFmt = '0.0';
-          cell.alignment = { vertical: 'top', horizontal: 'right' };
+        if (decimalColumns.includes(columnKey) && Number.isFinite(numericValue)) {
+          return makeCellXml({ ref, style: isAlt ? 12 : 11, value: numericValue, type: 'n' });
         }
+        if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+          return makeCellXml({ ref, style: isAlt ? 8 : 7, value: rawValue, type: 'n' });
+        }
+        return makeCellXml({ ref, style: isAlt ? 8 : 7, value: String(rawValue ?? ''), type: 'inlineStr' });
       });
+      rowXml.push(makeRowXml(excelRowNumber, cells, 20));
     });
 
-    columns.forEach((column, index) => {
-      if (currencyColumns.includes(column.key)) {
-        worksheet.getColumn(index + 1).alignment = { horizontal: 'right' };
-      }
-    });
+    rowXml.push(makeRowXml(footerRowNumber, [
+      makeCellXml({
+        ref: `A${footerRowNumber}`,
+        style: 13,
+        value: `${fileLabel} • Local raw-data export from MONIEZI. Use CSV for imports and XLSX for human-readable review.`,
+        type: 'inlineStr',
+      }),
+    ]));
 
-    const footerRowNumber = worksheet.rowCount + 2;
-    worksheet.mergeCells(`A${footerRowNumber}:${endColumnLetter}${footerRowNumber}`);
-    const footerCell = worksheet.getCell(`A${footerRowNumber}`);
-    footerCell.value = `${fileLabel} • Local raw-data export from MONIEZI. Use CSV for imports and XLSX for human-readable review.`;
-    footerCell.font = { name: 'Aptos', size: 9, color: { argb: slate500 }, italic: true };
+    const colsXml = columns
+      .map((column, index) => `<col min="${index + 1}" max="${index + 1}" width="${column.width}" customWidth="1"/>`)
+      .join('');
 
-    const buffer = await workbook.xlsx.writeBuffer();
-    return buffer as ArrayBuffer;
+    const sheetXml = makeXmlFile(
+      `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+        `<dimension ref="${dimensionRef}"/>` +
+        `<sheetViews><sheetView workbookViewId="0"><pane ySplit="6" topLeftCell="A7" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A7" sqref="A7"/></sheetView></sheetViews>` +
+        `<sheetFormatPr defaultRowHeight="15"/>` +
+        `<cols>${colsXml}</cols>` +
+        `<sheetData>${rowXml.join('')}</sheetData>` +
+        `<autoFilter ref="A6:${endColumnLetter}${dataEndRowNumber}"/>` +
+        `<mergeCells count="${mergeRefs.length}">${mergeRefs.map(ref => `<mergeCell ref="${ref}"/>`).join('')}</mergeCells>` +
+      `</worksheet>`
+    );
+
+    const stylesXml = makeXmlFile(
+      `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+        `<numFmts count="2"><numFmt numFmtId="164" formatCode="$#,##0.00"/><numFmt numFmtId="165" formatCode="0.0"/></numFmts>` +
+        `<fonts count="9">` +
+          `<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="18"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="11"/><color rgb="FF334155"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="10"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="10"/><color rgb="FF334155"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><i/><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/><family val="2"/></font>` +
+        `</fonts>` +
+        `<fills count="5">` +
+          `<fill><patternFill patternType="none"/></fill>` +
+          `<fill><patternFill patternType="gray125"/></fill>` +
+          `<fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>` +
+          `<fill><patternFill patternType="solid"><fgColor rgb="FF0F172A"/><bgColor indexed="64"/></patternFill></fill>` +
+          `<fill><patternFill patternType="solid"><fgColor rgb="FFF8FAFC"/><bgColor indexed="64"/></patternFill></fill>` +
+        `</fills>` +
+        `<borders count="4">` +
+          `<border><left/><right/><top/><bottom/><diagonal/></border>` +
+          `<border><left style="thin"><color rgb="FFE2E8F0"/></left><right style="thin"><color rgb="FFE2E8F0"/></right><top style="thin"><color rgb="FFE2E8F0"/></top><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>` +
+          `<border><left/><right/><top style="thin"><color rgb="FF0F172A"/></top><bottom style="thin"><color rgb="FF0F172A"/></bottom><diagonal/></border>` +
+          `<border><left/><right/><top/><bottom style="thin"><color rgb="FFE2E8F0"/></bottom><diagonal/></border>` +
+        `</borders>` +
+        `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
+        `<cellXfs count="14">` +
+          `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
+          `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
+          `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1"/></xf>` +
+          `<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>` +
+          `<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>` +
+          `<xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right"/></xf>` +
+          `<xf numFmtId="0" fontId="6" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
+          `<xf numFmtId="0" fontId="7" fillId="0" borderId="3" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>` +
+          `<xf numFmtId="0" fontId="7" fillId="4" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf>` +
+          `<xf numFmtId="164" fontId="7" fillId="0" borderId="3" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>` +
+          `<xf numFmtId="164" fontId="7" fillId="4" borderId="3" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>` +
+          `<xf numFmtId="165" fontId="7" fillId="0" borderId="3" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>` +
+          `<xf numFmtId="165" fontId="7" fillId="4" borderId="3" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="top"/></xf>` +
+          `<xf numFmtId="0" fontId="8" fillId="0" borderId="0" xfId="0" applyFont="1"/>` +
+        `</cellXfs>` +
+        `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
+      `</styleSheet>`
+    );
+
+    const workbookXml = makeXmlFile(
+      `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+        `<bookViews><workbookView xWindow="0" yWindow="0" windowWidth="24000" windowHeight="12000"/></bookViews>` +
+        `<sheets><sheet name="${escapeXml(safeSheetName)}" sheetId="1" r:id="rId1"/></sheets>` +
+      `</workbook>`
+    );
+
+    const workbookRelsXml = makeXmlFile(
+      `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+        `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>` +
+        `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>` +
+      `</Relationships>`
+    );
+
+    const rootRelsXml = makeXmlFile(
+      `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+        `<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>` +
+        `<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>` +
+        `<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>` +
+      `</Relationships>`
+    );
+
+    const contentTypesXml = makeXmlFile(
+      `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+        `<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>` +
+        `<Default Extension="xml" ContentType="application/xml"/>` +
+        `<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
+        `<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>` +
+        `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>` +
+        `<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>` +
+        `<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>` +
+      `</Types>`
+    );
+
+    const coreXml = makeXmlFile(
+      `<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">` +
+        `<dc:creator>MONIEZI</dc:creator>` +
+        `<cp:lastModifiedBy>MONIEZI</cp:lastModifiedBy>` +
+        `<dcterms:created xsi:type="dcterms:W3CDTF">${now.toISOString()}</dcterms:created>` +
+        `<dcterms:modified xsi:type="dcterms:W3CDTF">${now.toISOString()}</dcterms:modified>` +
+        `<dc:title>${escapeXml(title)}</dc:title>` +
+        `<dc:subject>${escapeXml(fileLabel)}</dc:subject>` +
+      `</cp:coreProperties>`
+    );
+
+    const appXml = makeXmlFile(
+      `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">` +
+        `<Application>MONIEZI</Application>` +
+        `<HeadingPairs><vt:vector size="2" baseType="variant"><vt:variant><vt:lpstr>Worksheets</vt:lpstr></vt:variant><vt:variant><vt:i4>1</vt:i4></vt:variant></vt:vector></HeadingPairs>` +
+        `<TitlesOfParts><vt:vector size="1" baseType="lpstr"><vt:lpstr>${escapeXml(safeSheetName)}</vt:lpstr></vt:vector></TitlesOfParts>` +
+      `</Properties>`
+    );
+
+    const xlsxBlob = createZipBlobUncompressed([
+      { name: '[Content_Types].xml', data: contentTypesXml, mtime: now },
+      { name: '_rels/.rels', data: rootRelsXml, mtime: now },
+      { name: 'docProps/app.xml', data: appXml, mtime: now },
+      { name: 'docProps/core.xml', data: coreXml, mtime: now },
+      { name: 'xl/workbook.xml', data: workbookXml, mtime: now },
+      { name: 'xl/_rels/workbook.xml.rels', data: workbookRelsXml, mtime: now },
+      { name: 'xl/styles.xml', data: stylesXml, mtime: now },
+      { name: 'xl/worksheets/sheet1.xml', data: sheetXml, mtime: now },
+    ]);
+
+    return await xlsxBlob.arrayBuffer();
   };
 
   const handleExportTaxLedgerCSV = () => {
