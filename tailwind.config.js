@@ -13,7 +13,7 @@ export default {
         brand: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
-        slatebg: "#dbe7ff",
+        slatebg: "#ffffff",
       },
     },
   },

@@ -6215,25 +6215,32 @@ const demoMileageTrips: MileageTrip[] = [
     <>
       <style>{`
 /* ================================
-   Light mode readability boost
-   (Makes text/icons a bit sharper)
+   Light mode visual pass
+   White canvas + stronger text
    ================================ */
-html:not(.dark) .text-slate-200 { color: rgb(148 163 184) !important; } /* slate-400 */
-html:not(.dark) .text-slate-300 { color: rgb(100 116 139) !important; } /* slate-500 */
-html:not(.dark) .text-slate-400 { color: rgb(71 85 105) !important; }  /* slate-600 */
-html:not(.dark) .text-slate-500 { color: rgb(51 65 85) !important; }  /* slate-700 */
-html:not(.dark) .text-slate-600 { color: rgb(30 41 59) !important; }  /* slate-800 */
-html:not(.dark) .text-slate-700 { color: rgb(15 23 42) !important; }  /* slate-900 */
-html:not(.dark) .text-slate-800 { color: rgb(2 6 23) !important; }    /* slate-950 */
-html:not(.dark) .text-slate-900 { color: rgb(2 6 23) !important; }    /* slate-950 */
+html:not(.dark) .bg-slatebg { background: #ffffff !important; }
+html:not(.dark) .text-slate-200 { color: rgb(100 116 139) !important; }
+html:not(.dark) .text-slate-300 { color: rgb(71 85 105) !important; }
+html:not(.dark) .text-slate-400 { color: rgb(51 65 85) !important; }
+html:not(.dark) .text-slate-500 { color: rgb(30 41 59) !important; }
+html:not(.dark) .text-slate-600 { color: rgb(15 23 42) !important; }
+html:not(.dark) .text-slate-700,
+html:not(.dark) .text-slate-800,
+html:not(.dark) .text-slate-900 { color: rgb(2 6 23) !important; }
+
+html:not(.dark) .font-normal { font-weight: 500 !important; }
+html:not(.dark) .font-medium { font-weight: 600 !important; }
+html:not(.dark) .font-semibold { font-weight: 700 !important; }
+html:not(.dark) .font-bold { font-weight: 800 !important; }
 
 /* Slightly crisper borders in light mode */
-html:not(.dark) .border-slate-100 { border-color: rgb(226 232 240) !important; } /* slate-200 */
-html:not(.dark) .border-slate-200 { border-color: rgb(203 213 225) !important; } /* slate-300 */
+html:not(.dark) .border-slate-100 { border-color: rgb(226 232 240) !important; }
+html:not(.dark) .border-slate-200 { border-color: rgb(203 213 225) !important; }
 
 /* Subtle “inkier” shadows in light mode */
 html:not(.dark) .shadow-sm { box-shadow: 0 1px 2px rgba(2, 6, 23, 0.10) !important; }
 html:not(.dark) .shadow { box-shadow: 0 1px 3px rgba(2, 6, 23, 0.14), 0 1px 2px rgba(2, 6, 23, 0.10) !important; }
+html:not(.dark) .shadow-md { box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04) !important; }
 
 /* Slightly stronger separators */
 html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(203 213 225) !important; }

@@ -212,15 +212,21 @@
       
       /* Force all text in light mode to be dark and readable */
       html:not(.dark) body {
-        color: #000000;
+        background: #ffffff !important;
+        color: #020617;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
       }
+
+      html:not(.dark) .bg-slatebg {
+        background: #ffffff !important;
+      }
       
-      /* Light theme: Boost font weights for better readability - but keep large numbers refined */
+      /* Light theme: Boost font weights for better readability */
+      html:not(.dark) .font-normal { font-weight: 500 !important; }
       html:not(.dark) .font-medium { font-weight: 600 !important; }
       html:not(.dark) .font-semibold { font-weight: 700 !important; }
-      html:not(.dark) .font-bold { font-weight: 700 !important; }
+      html:not(.dark) .font-bold { font-weight: 800 !important; }
       html:not(.dark) .font-extrabold { font-weight: 800 !important; }
       
       /* Light theme: Make ALL small text bolder - but NOT override explicit white */
@@ -409,6 +415,24 @@
       }
       html:not(.dark) .font-semibold {
         font-weight: 700 !important;
+      }
+
+
+      /* Light theme: cleaner white canvas with slightly stronger separation */
+      html:not(.dark) .bg-white {
+        background-color: #ffffff !important;
+      }
+      html:not(.dark) .bg-slate-50 {
+        background-color: #f8fafc !important;
+      }
+      html:not(.dark) .bg-slate-100 {
+        background-color: #f1f5f9 !important;
+      }
+      html:not(.dark) .shadow-md {
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04) !important;
+      }
+      html:not(.dark) .shadow-lg {
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.10), 0 4px 12px rgba(15, 23, 42, 0.05) !important;
       }
 
       /* Preserve white text on dark backgrounds - these must NOT be overridden */
