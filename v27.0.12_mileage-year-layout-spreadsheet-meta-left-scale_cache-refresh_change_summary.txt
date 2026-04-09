@@ -1,0 +1,8 @@
+MONIEZI v27.0.12
+
+- Fixed Mileage export controls layout so Tax Year remains visible on mobile.
+- Kept Mileage spreadsheet button primary and Mileage CSV secondary.
+- Scaled up spreadsheet metadata row typography for business name and Tax Year.
+- Moved generated timestamp to its own row so business name and Tax Year read cleanly on mobile spreadsheet apps.
+- Bumped package version to 27.0.12.
+- Bumped service worker cache version to force clients to refresh updated UI.

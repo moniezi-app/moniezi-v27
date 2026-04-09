@@ -4503,15 +4503,16 @@ const demoMileageTrips: MileageTrip[] = [
     const generatedLabel = `Generated ${now.toLocaleString()}`;
     const exportBusinessName = (settings.businessName || 'Business').trim() || 'Business';
     const headerRowNumber = 5;
+    const generatedRowNumber = 4;
     const dataStartRowNumber = headerRowNumber + 1;
     const dataEndRowNumber = Math.max(headerRowNumber, headerRowNumber + rows.length);
-    const lastRowNumber = Math.max(dataEndRowNumber, headerRowNumber);
+    const lastRowNumber = Math.max(dataEndRowNumber, generatedRowNumber);
     const dimensionRef = `A1:${endColumnLetter}${lastRowNumber}`;
     const mergeRefs = [
       `A1:${endColumnLetter}1`,
       `A3:B3`,
-      `C3:D3`,
-      `E3:${endColumnLetter}3`,
+      `C3:${endColumnLetter}3`,
+      `A4:${endColumnLetter}4`,
     ];
 
     const makeCellXml = ({
@@ -4538,14 +4539,15 @@ const demoMileageTrips: MileageTrip[] = [
     };
 
     const rowXml: string[] = [];
-    rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 34));
+    rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 38));
     rowXml.push('<row r="2"/>');
     rowXml.push(makeRowXml(3, [
       makeCellXml({ ref: 'A3', style: 3, value: exportBusinessName, type: 'inlineStr' }),
-      makeCellXml({ ref: 'D3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
-      makeCellXml({ ref: 'F3', style: 5, value: generatedLabel, type: 'inlineStr' }),
-    ], 30));
-    rowXml.push('<row r="4"/>');
+      makeCellXml({ ref: 'C3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
+    ], 36));
+    rowXml.push(makeRowXml(generatedRowNumber, [
+      makeCellXml({ ref: 'A4', style: 5, value: generatedLabel, type: 'inlineStr' }),
+    ], 22));
     rowXml.push(makeRowXml(headerRowNumber, columns.map((column, index) => makeCellXml({
       ref: `${getExcelColumnName(index + 1)}${headerRowNumber}`,
       style: 6,
@@ -4598,9 +4600,9 @@ const demoMileageTrips: MileageTrip[] = [
           `<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="18"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><sz val="11"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><b/><sz val="13"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><b/><sz val="13"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><sz val="11"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="15"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="15"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="10"/><color rgb="FF64748B"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><i/><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/><family val="2"/></font>` +
@@ -7676,12 +7678,17 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Mileage</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export clean CSV or spreadsheet files for your accountant.</p>
                 </div>
-                <div className="w-full lg:w-auto grid grid-cols-1 sm:grid-cols-[120px,minmax(0,1fr),minmax(0,1fr)] gap-2">
-                  <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="w-full min-w-[120px] px-3 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
-                    {[2026, 2025, 2024, 2023].map(y => (<option key={y} value={y}>{y}</option>))}
-                  </select>
-                  <button onClick={handleExportMileageSpreadsheet} className="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all text-center">Export Mileage Spreadsheet</button>
-                  <button onClick={handleExportMileageCSV} className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-center">Export Mileage CSV</button>
+                <div className="w-full lg:w-auto flex flex-col gap-2">
+                  <div className="w-full sm:w-[140px]">
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 block">Tax Year</label>
+                    <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="w-full px-3 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
+                      {[2026, 2025, 2024, 2023].map(y => (<option key={y} value={y}>{y}</option>))}
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button onClick={handleExportMileageSpreadsheet} className="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all text-center">Export Mileage Spreadsheet</button>
+                    <button onClick={handleExportMileageCSV} className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-center">Export Mileage CSV</button>
+                  </div>
                 </div>
               </div>
 
