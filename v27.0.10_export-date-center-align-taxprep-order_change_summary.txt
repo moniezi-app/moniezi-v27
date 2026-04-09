@@ -1,0 +1,4 @@
+v27.0.10
+- changed export dates to MM/DD/YYYY
+- changed XLSX data cell vertical alignment from top to center
+- reordered Tax Prep Package actions to: share PDF, download PDF, spreadsheet exports, CSV exports, linked receipts ZIP
