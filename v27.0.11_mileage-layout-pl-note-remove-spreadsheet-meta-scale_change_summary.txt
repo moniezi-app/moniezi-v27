@@ -1,0 +1,7 @@
+MONIEZI v27.0.11
+
+- Removed the extra Premium P&L PDF explanatory note block from Reports.
+- Fixed Mileage export controls layout so the tax year selector remains fully visible on mobile.
+- Increased spreadsheet metadata row prominence for business name and Tax Year, with taller row height and larger fonts.
+- Shifted spreadsheet metadata merges left so Tax Year is easier to see on mobile spreadsheet apps.
+- Bumped app version and service worker cache version.

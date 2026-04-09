@@ -4509,9 +4509,9 @@ const demoMileageTrips: MileageTrip[] = [
     const dimensionRef = `A1:${endColumnLetter}${lastRowNumber}`;
     const mergeRefs = [
       `A1:${endColumnLetter}1`,
-      `A3:C3`,
-      `D3:E3`,
-      `F3:${endColumnLetter}3`,
+      `A3:B3`,
+      `C3:D3`,
+      `E3:${endColumnLetter}3`,
     ];
 
     const makeCellXml = ({
@@ -4544,7 +4544,7 @@ const demoMileageTrips: MileageTrip[] = [
       makeCellXml({ ref: 'A3', style: 3, value: exportBusinessName, type: 'inlineStr' }),
       makeCellXml({ ref: 'D3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
       makeCellXml({ ref: 'F3', style: 5, value: generatedLabel, type: 'inlineStr' }),
-    ], 24));
+    ], 30));
     rowXml.push('<row r="4"/>');
     rowXml.push(makeRowXml(headerRowNumber, columns.map((column, index) => makeCellXml({
       ref: `${getExcelColumnName(index + 1)}${headerRowNumber}`,
@@ -4598,9 +4598,9 @@ const demoMileageTrips: MileageTrip[] = [
           `<font><sz val="11"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="18"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><sz val="11"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><b/><sz val="10"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><b/><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
-          `<font><sz val="10"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="13"/><color rgb="FF2563EB"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><b/><sz val="13"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
+          `<font><sz val="11"/><color rgb="FF475569"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><sz val="10"/><color rgb="FF0F172A"/><name val="Calibri"/><family val="2"/></font>` +
           `<font><i/><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/><family val="2"/></font>` +
@@ -4623,9 +4623,9 @@ const demoMileageTrips: MileageTrip[] = [
           `<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>` +
           `<xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
           `<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment wrapText="1"/></xf>` +
-          `<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>` +
-          `<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>` +
-          `<xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right"/></xf>` +
+          `<xf numFmtId="0" fontId="3" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
+          `<xf numFmtId="0" fontId="4" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
+          `<xf numFmtId="0" fontId="5" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf>` +
           `<xf numFmtId="0" fontId="6" fillId="3" borderId="2" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf>` +
           `<xf numFmtId="0" fontId="7" fillId="0" borderId="3" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>` +
           `<xf numFmtId="0" fontId="7" fillId="4" borderId="3" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf>` +
@@ -7671,17 +7671,17 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
             {/* Mileage Tracker (promoted to its own bottom-tab page) */}
             <div className="bg-white dark:bg-slate-950 p-5 sm:p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Mileage</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Track deductible trips and export clean CSV or spreadsheet files for your accountant.</p>
                 </div>
-                <div className="flex gap-2">
-                  <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
+                <div className="w-full lg:w-auto grid grid-cols-1 sm:grid-cols-[120px,minmax(0,1fr),minmax(0,1fr)] gap-2">
+                  <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="w-full min-w-[120px] px-3 py-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
                     {[2026, 2025, 2024, 2023].map(y => (<option key={y} value={y}>{y}</option>))}
                   </select>
-                  <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
-                  <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
+                  <button onClick={handleExportMileageSpreadsheet} className="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all text-center">Export Mileage Spreadsheet</button>
+                  <button onClick={handleExportMileageCSV} className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-center">Export Mileage CSV</button>
                 </div>
               </div>
 
@@ -7944,14 +7944,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 )}
 
 
-                {/* P&L statement is shown in the Preview modal to keep this screen clean */}
-                <div className="mt-4 p-4 rounded-lg bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-                  <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Premium P&amp;L PDF</div>
-                  <div className="text-sm text-slate-600 dark:text-slate-300 mt-1">
-                    This report now exports as a page-based PDF directly. Use <span className="font-bold">Share PDF</span> or <span className="font-bold">Download PDF</span> above.
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mt-4">
+                <div className="mt-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
                     <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
                       <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Revenue</div>
                       <div className="text-lg font-extrabold tabular-nums text-slate-900 dark:text-white mt-1">{formatCurrency.format(proPLData.netRevenue)}</div>
