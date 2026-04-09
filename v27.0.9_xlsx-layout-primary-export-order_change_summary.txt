@@ -1,0 +1,11 @@
+MONIEZI v27.0.9
+
+Changes in this version:
+- Improved XLSX spreadsheet readability on mobile by increasing title, metadata, header, and data row heights.
+- Added estimated row-height sizing for wrapped text so long descriptions, categories, purposes, clients, and notes are less cramped.
+- Widened key spreadsheet columns for Tax Transactions and Business Mileage Log exports.
+- Kept CSV exports as raw utility exports.
+- Reordered export actions so Spreadsheet/XLSX is primary and CSV is secondary in both Tax Prep Package and Mileage views.
+- Restyled CSV export buttons as secondary outline actions.
+- Bumped app version to 27.0.9.
+- Bumped service worker cache version to moniezi-core-v27-2026-04-09e.

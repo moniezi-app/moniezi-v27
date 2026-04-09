@@ -4448,6 +4448,30 @@ const demoMileageTrips: MileageTrip[] = [
       });
   };
 
+  const estimateSpreadsheetRowHeight = (
+    rowValues: any[],
+    columns: { header: string; key: string; width: number }[],
+    wrappedColumns: string[]
+  ) => {
+    const baseHeight = 24;
+    const extraLineHeight = 13;
+    let maxLines = 1;
+
+    rowValues.forEach((rawValue, index) => {
+      const column = columns[index];
+      if (!column || !wrappedColumns.includes(column.key)) return;
+      const text = String(rawValue ?? '').trim();
+      if (!text) return;
+      const estimatedCharsPerLine = Math.max(10, Math.floor(column.width * 1.12));
+      const estimatedLines = text
+        .split(/\r?\n/)
+        .reduce((maxForCell, line) => Math.max(maxForCell, Math.max(1, Math.ceil(line.length / estimatedCharsPerLine))), 1);
+      maxLines = Math.max(maxLines, estimatedLines);
+    });
+
+    return Math.min(88, baseHeight + (maxLines - 1) * extraLineHeight);
+  };
+
   const buildStyledSpreadsheetBuffer = async ({
     sheetName,
     title,
@@ -4456,6 +4480,7 @@ const demoMileageTrips: MileageTrip[] = [
     rows,
     currencyColumns = [],
     decimalColumns = [],
+    wrappedColumns = [],
   }: {
     sheetName: string;
     title: string;
@@ -4464,6 +4489,7 @@ const demoMileageTrips: MileageTrip[] = [
     rows: any[][];
     currencyColumns?: string[];
     decimalColumns?: string[];
+    wrappedColumns?: string[];
   }) => {
     const safeSheetName = sanitizeSheetName(sheetName);
     const endColumnLetter = getExcelColumnName(columns.length);
@@ -4506,20 +4532,20 @@ const demoMileageTrips: MileageTrip[] = [
     };
 
     const rowXml: string[] = [];
-    rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 28));
+    rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 34));
     rowXml.push('<row r="2"/>');
     rowXml.push(makeRowXml(3, [
       makeCellXml({ ref: 'A3', style: 3, value: exportBusinessName, type: 'inlineStr' }),
       makeCellXml({ ref: 'D3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
       makeCellXml({ ref: 'F3', style: 5, value: generatedLabel, type: 'inlineStr' }),
-    ]));
+    ], 24));
     rowXml.push('<row r="4"/>');
     rowXml.push(makeRowXml(headerRowNumber, columns.map((column, index) => makeCellXml({
       ref: `${getExcelColumnName(index + 1)}${headerRowNumber}`,
       style: 6,
       value: column.header,
       type: 'inlineStr',
-    })), 22));
+    })), 26));
 
     rows.forEach((rowValues, rowIndex) => {
       const excelRowNumber = dataStartRowNumber + rowIndex;
@@ -4539,7 +4565,8 @@ const demoMileageTrips: MileageTrip[] = [
         }
         return makeCellXml({ ref, style: isAlt ? 8 : 7, value: String(rawValue ?? ''), type: 'inlineStr' });
       });
-      rowXml.push(makeRowXml(excelRowNumber, cells, 20));
+      const estimatedRowHeight = estimateSpreadsheetRowHeight(rowValues, columns, wrappedColumns);
+      rowXml.push(makeRowXml(excelRowNumber, cells, estimatedRowHeight));
     });
 
     const colsXml = columns
@@ -4550,7 +4577,7 @@ const demoMileageTrips: MileageTrip[] = [
       `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
         `<dimension ref="${dimensionRef}"/>` +
         `<sheetViews><sheetView workbookViewId="0"><pane ySplit="${headerRowNumber}" topLeftCell="A${dataStartRowNumber}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A${dataStartRowNumber}" sqref="A${dataStartRowNumber}"/></sheetView></sheetViews>` +
-        `<sheetFormatPr defaultRowHeight="15"/>` +
+        `<sheetFormatPr defaultRowHeight="20"/>` +
         `<cols>${colsXml}</cols>` +
         `<sheetData>${rowXml.join('')}</sheetData>` +
         `<autoFilter ref="A${headerRowNumber}:${endColumnLetter}${dataEndRowNumber}"/>` +
@@ -4698,16 +4725,17 @@ const demoMileageTrips: MileageTrip[] = [
         title: 'Tax Transactions',
         fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Tax Transactions ${taxPrepYear}`,
         columns: [
-          { header: 'Date', key: 'date', width: 14 },
-          { header: 'Entry Type', key: 'entry_type', width: 14 },
-          { header: 'Description', key: 'description', width: 30 },
-          { header: 'Category', key: 'category', width: 24 },
+          { header: 'Date', key: 'date', width: 15 },
+          { header: 'Entry Type', key: 'entry_type', width: 16 },
+          { header: 'Description', key: 'description', width: 44 },
+          { header: 'Category', key: 'category', width: 28 },
           { header: 'Amount (USD)', key: 'amount_usd', width: 16 },
-          { header: 'Notes', key: 'notes', width: 34 },
-          { header: 'Receipt ID', key: 'receipt_id', width: 18 },
+          { header: 'Notes', key: 'notes', width: 42 },
+          { header: 'Receipt ID', key: 'receipt_id', width: 20 },
         ],
         rows,
         currencyColumns: ['amount_usd'],
+        wrappedColumns: ['description', 'category', 'notes'],
       });
       downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_TaxTransactions_${taxPrepYear}.xlsx`);
       showToast(`Exported Tax Transactions spreadsheet for ${taxPrepYear}`, 'success');
@@ -4742,17 +4770,18 @@ const demoMileageTrips: MileageTrip[] = [
         title: 'Business Mileage Log',
         fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Business Mileage Log ${taxPrepYear}`,
         columns: [
-          { header: 'Date', key: 'date', width: 14 },
-          { header: 'Miles', key: 'miles', width: 12 },
-          { header: 'Rate (USD)', key: 'rate_usd', width: 12 },
-          { header: 'Deduction (USD)', key: 'deduction_usd', width: 16 },
-          { header: 'Purpose', key: 'purpose', width: 28 },
-          { header: 'Client', key: 'client', width: 24 },
-          { header: 'Notes', key: 'notes', width: 34 },
+          { header: 'Date', key: 'date', width: 15 },
+          { header: 'Miles', key: 'miles', width: 11 },
+          { header: 'Rate (USD)', key: 'rate_usd', width: 14 },
+          { header: 'Deduction (USD)', key: 'deduction_usd', width: 18 },
+          { header: 'Purpose', key: 'purpose', width: 40 },
+          { header: 'Client', key: 'client', width: 28 },
+          { header: 'Notes', key: 'notes', width: 40 },
         ],
         rows,
         currencyColumns: ['rate_usd', 'deduction_usd'],
         decimalColumns: ['miles'],
+        wrappedColumns: ['purpose', 'client', 'notes'],
       });
       downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_Mileage_${taxPrepYear}.xlsx`);
       showToast(`Exported Mileage spreadsheet for ${taxPrepYear}`, 'success');
@@ -7645,8 +7674,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   <select value={taxPrepYear} onChange={e => setTaxPrepYear(Number(e.target.value))} className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-sm font-bold">
                     {[2026, 2025, 2024, 2023].map(y => (<option key={y} value={y}>{y}</option>))}
                   </select>
-                  <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
                   <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
+                  <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
                 </div>
               </div>
 
@@ -8021,12 +8050,12 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Tax Transactions CSV</button>
                     <button onClick={handleExportTaxLedgerSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Tax Transactions Spreadsheet</button>
-                    <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
                     <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
-                    <button onClick={handleExportReceiptsZip} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Linked Receipts ZIP</button>
+                    <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Tax Transactions CSV</button>
+                    <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
                     <button onClick={handleShareTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Share Tax Summary PDF</button>
+                    <button onClick={handleExportReceiptsZip} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Linked Receipts ZIP</button>
                     <button onClick={handleDownloadTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all md:col-span-2">Download Tax Summary PDF</button>
                   </div>
 
