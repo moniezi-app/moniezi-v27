@@ -55,3 +55,123 @@ body.modal-open {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
+
+/* High-contrast light mode pass */
+html.theme-light,
+html.theme-light body,
+html.theme-light #root {
+  background: #ffffff;
+  color: #020617;
+}
+
+html.theme-light body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.theme-light h1,
+html.theme-light h2,
+html.theme-light h3,
+html.theme-light h4,
+html.theme-light h5,
+html.theme-light h6 {
+  color: #020617;
+  font-weight: 800;
+}
+
+html.theme-light .bg-slate-50,
+html.theme-light .bg-slate-100,
+html.theme-light .bg-gray-50,
+html.theme-light .bg-gray-100,
+html.theme-light .bg-white\/80,
+html.theme-light .bg-white\/90,
+html.theme-light .bg-white\/95 {
+  background-color: #ffffff !important;
+}
+
+html.theme-light .bg-slate-50\/50,
+html.theme-light .bg-slate-50\/70,
+html.theme-light .bg-slate-100\/80,
+html.theme-light .bg-slate-100\/90,
+html.theme-light .bg-gray-50\/80,
+html.theme-light .bg-gray-100\/80 {
+  background-color: rgba(255,255,255,0.96) !important;
+}
+
+html.theme-light .text-slate-400,
+html.theme-light .text-slate-500,
+html.theme-light .text-slate-600,
+html.theme-light .text-slate-700,
+html.theme-light .text-gray-400,
+html.theme-light .text-gray-500,
+html.theme-light .text-gray-600,
+html.theme-light .text-gray-700,
+html.theme-light .text-gray-800 {
+  color: #0f172a !important;
+}
+
+html.theme-light .text-slate-800,
+html.theme-light .text-slate-900,
+html.theme-light .text-gray-900,
+html.theme-light .text-black {
+  color: #020617 !important;
+}
+
+html.theme-light .font-medium {
+  font-weight: 600 !important;
+}
+
+html.theme-light .font-semibold {
+  font-weight: 700 !important;
+}
+
+html.theme-light label,
+html.theme-light button,
+html.theme-light input,
+html.theme-light textarea,
+html.theme-light select {
+  color: #020617;
+}
+
+html.theme-light input::placeholder,
+html.theme-light textarea::placeholder {
+  color: #475569 !important;
+  opacity: 1;
+}
+
+html.theme-light .border-slate-100,
+html.theme-light .border-slate-200,
+html.theme-light .border-slate-300,
+html.theme-light .border-gray-200,
+html.theme-light .border-gray-300 {
+  border-color: #cbd5e1 !important;
+}
+
+html.theme-light .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.theme-light .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.theme-light .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #cbd5e1 !important;
+}
+
+html.theme-light .shadow-sm {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
+}
+
+html.theme-light .shadow,
+html.theme-light .shadow-md {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.10) !important;
+}
+
+html.theme-light .shadow-lg,
+html.theme-light .shadow-xl,
+html.theme-light .shadow-2xl {
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12) !important;
+}
+
+html.theme-light .ring-slate-200,
+html.theme-light .ring-slate-300,
+html.theme-light .ring-gray-200,
+html.theme-light .ring-gray-300 {
+  --tw-ring-color: rgba(148, 163, 184, 0.55) !important;
+}

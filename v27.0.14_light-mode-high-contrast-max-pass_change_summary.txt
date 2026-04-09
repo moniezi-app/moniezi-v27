@@ -1,0 +1,9 @@
+MONIEZI v27.0.14
+
+- Added explicit theme-light class toggling on the html element.
+- Changed light mode to a true high-contrast pass on white.
+- Darkened light-mode text utilities toward near-black / deep navy.
+- Increased light-mode medium and semibold font weights.
+- Darkened placeholders, borders, dividers, and ring colors.
+- Strengthened light-mode shadows so white surfaces remain separated.
+- Left dark mode unchanged.

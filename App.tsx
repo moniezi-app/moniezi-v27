@@ -1655,8 +1655,10 @@ export default function App() {
     if (savedTheme) {
         setTheme(savedTheme);
         document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+        document.documentElement.classList.toggle('theme-light', savedTheme === 'light');
     } else {
         document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('theme-light');
     }
   }, []);
 
@@ -1884,6 +1886,7 @@ export default function App() {
       const newTheme = theme === 'light' ? 'dark' : 'light';
       setTheme(newTheme);
       document.documentElement.classList.toggle('dark', newTheme === 'dark');
+      document.documentElement.classList.toggle('theme-light', newTheme === 'light');
       localStorage.setItem('moniezi_theme', newTheme);
   };
 
