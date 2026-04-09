@@ -4686,17 +4686,17 @@ const demoMileageTrips: MileageTrip[] = [
         row[6],
       ]),
     ];
-    downloadBlob(makeCsvBlob(rows), `MONIEZI_TaxLedger_${taxPrepYear}.csv`);
-    showToast(`Exported Tax Ledger CSV for ${taxPrepYear}`, 'success');
+    downloadBlob(makeCsvBlob(rows), `MONIEZI_TaxTransactions_${taxPrepYear}.csv`);
+    showToast(`Exported Tax Transactions CSV for ${taxPrepYear}`, 'success');
   };
 
   const handleExportTaxLedgerSpreadsheet = async () => {
     try {
       const rows = getTaxLedgerExportRows();
       const buffer = await buildStyledSpreadsheetBuffer({
-        sheetName: 'Tax Ledger',
-        title: 'Tax Ledger',
-        fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Tax Ledger ${taxPrepYear}`,
+        sheetName: 'Tax Transactions',
+        title: 'Tax Transactions',
+        fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Tax Transactions ${taxPrepYear}`,
         columns: [
           { header: 'Date', key: 'date', width: 14 },
           { header: 'Entry Type', key: 'entry_type', width: 14 },
@@ -4709,11 +4709,11 @@ const demoMileageTrips: MileageTrip[] = [
         rows,
         currencyColumns: ['amount_usd'],
       });
-      downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_TaxLedger_${taxPrepYear}.xlsx`);
-      showToast(`Exported Tax Ledger spreadsheet for ${taxPrepYear}`, 'success');
+      downloadBlob(makeSpreadsheetBlob(buffer), `MONIEZI_TaxTransactions_${taxPrepYear}.xlsx`);
+      showToast(`Exported Tax Transactions spreadsheet for ${taxPrepYear}`, 'success');
     } catch (error) {
-      console.error('Tax Ledger spreadsheet export failed', error);
-      showToast('Tax Ledger spreadsheet export failed', 'error');
+      console.error('Tax Transactions spreadsheet export failed', error);
+      showToast('Tax Transactions spreadsheet export failed', 'error');
     }
   };
 
@@ -7154,7 +7154,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                      <div className="flex items-center gap-2 sm:gap-3">
                        <div className={`p-2 sm:p-2.5 rounded-lg flex-shrink-0 ${currentPage === Page.Income ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : currentPage === Page.Expenses ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-500' : 'bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400'}`}>{currentPage === Page.Income ? <TrendingUp size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5}/> : currentPage === Page.Expenses ? <TrendingDown size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5}/> : <History size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5} />}</div>
-                       <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">{currentPage === Page.Income ? 'Income' : currentPage === Page.Expenses ? 'Expenses' : 'Ledger'}</h2>
+                       <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">{currentPage === Page.Income ? 'Income' : currentPage === Page.Expenses ? 'Expenses' : 'Transactions'}</h2>
                      </div>
                  </div>
                  {(currentPage === Page.Income || currentPage === Page.Expenses || (currentPage === Page.AllTransactions || currentPage === Page.Ledger)) && (
@@ -8003,7 +8003,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                       </div>
                       <div>
                         <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white">Tax Prep Package</h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">Export ledger, mileage, receipts, and a summary for a single tax year.</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-300">Export tax transactions, mileage, receipts, and a summary for a single tax year.</p>
                       </div>
                     </div>
 
@@ -8021,8 +8021,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Tax Ledger CSV</button>
-                    <button onClick={handleExportTaxLedgerSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Tax Ledger Spreadsheet</button>
+                    <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Tax Transactions CSV</button>
+                    <button onClick={handleExportTaxLedgerSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Tax Transactions Spreadsheet</button>
                     <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
                     <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
                     <button onClick={handleExportReceiptsZip} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Export Linked Receipts ZIP</button>
@@ -10022,7 +10022,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   onClick={() => setCurrentPage(Page.AllTransactions)}
                   className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-900"
                 >
-                  Ledger
+                  Activity
                 </button>
                 <button
                   onClick={() => setCurrentPage(Page.Clients)}
@@ -10198,7 +10198,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <span className={`text-[11px] mt-0.5 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Invoices && billingDocType === 'estimate' ? undefined : 'var(--nav-inactive)' }}>Estimate</span>
             </button>
 
-            {/* Center Nav - Ledger only */}
+            {/* Center Nav - Activity */}
             <button 
               onClick={() => setCurrentPage(Page.AllTransactions)} 
               className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'text-blue-600 dark:text-white' : ''}`}
@@ -10207,7 +10207,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               <div className={`p-1.5 rounded-lg ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
                 <History size={20} strokeWidth={(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : 'var(--nav-inactive)' }}>Ledger</span>
+              <span className={`text-[11px] mt-0.5 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : 'var(--nav-inactive)' }}>Activity</span>
             </button>
 
             {/* Mileage */}
@@ -10921,7 +10921,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
               </div>
               
               <div className="text-xs text-slate-600 dark:text-slate-300 italic">
-                💡 All entries will be created immediately. Review them in your ledger.
+                💡 All entries will be created immediately. Review them in your transactions.
               </div>
             </div>
             
