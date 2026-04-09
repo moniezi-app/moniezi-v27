@@ -1,0 +1,9 @@
+MONIEZI v27.0.7
+
+Changed spreadsheet exports to use professional document titles instead of MONIEZI-branded export titles.
+Added the business name from Settings as the spreadsheet subheader row.
+Kept tax year and generated timestamp metadata.
+Tax Ledger title is now "Tax Ledger".
+Mileage title is now "Business Mileage Log".
+Workbook metadata subject now includes the business name.
+Bumped service worker cache version.

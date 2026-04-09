@@ -4469,6 +4469,7 @@ const demoMileageTrips: MileageTrip[] = [
     const endColumnLetter = getExcelColumnName(columns.length);
     const now = new Date();
     const generatedLabel = `Generated ${now.toLocaleString()}`;
+    const exportBusinessName = (settings.businessName || 'Business').trim() || 'Business';
     const headerRowNumber = 5;
     const dataStartRowNumber = headerRowNumber + 1;
     const dataEndRowNumber = Math.max(headerRowNumber, headerRowNumber + rows.length);
@@ -4476,8 +4477,8 @@ const demoMileageTrips: MileageTrip[] = [
     const dimensionRef = `A1:${endColumnLetter}${lastRowNumber}`;
     const mergeRefs = [
       `A1:${endColumnLetter}1`,
-      `A3:B3`,
-      `C3:E3`,
+      `A3:C3`,
+      `D3:E3`,
       `F3:${endColumnLetter}3`,
     ];
 
@@ -4508,8 +4509,8 @@ const demoMileageTrips: MileageTrip[] = [
     rowXml.push(makeRowXml(1, [makeCellXml({ ref: 'A1', style: 1, value: title, type: 'inlineStr' })], 28));
     rowXml.push('<row r="2"/>');
     rowXml.push(makeRowXml(3, [
-      makeCellXml({ ref: 'A3', style: 3, value: 'MONIEZI Pro Finance', type: 'inlineStr' }),
-      makeCellXml({ ref: 'C3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
+      makeCellXml({ ref: 'A3', style: 3, value: exportBusinessName, type: 'inlineStr' }),
+      makeCellXml({ ref: 'D3', style: 4, value: `Tax Year ${taxPrepYear}`, type: 'inlineStr' }),
       makeCellXml({ ref: 'F3', style: 5, value: generatedLabel, type: 'inlineStr' }),
     ]));
     rowXml.push('<row r="4"/>');
@@ -4694,8 +4695,8 @@ const demoMileageTrips: MileageTrip[] = [
       const rows = getTaxLedgerExportRows();
       const buffer = await buildStyledSpreadsheetBuffer({
         sheetName: 'Tax Ledger',
-        title: 'MONIEZI Tax Ledger Export',
-        fileLabel: `Tax Ledger ${taxPrepYear}`,
+        title: 'Tax Ledger',
+        fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Tax Ledger ${taxPrepYear}`,
         columns: [
           { header: 'Date', key: 'date', width: 14 },
           { header: 'Entry Type', key: 'entry_type', width: 14 },
@@ -4737,9 +4738,9 @@ const demoMileageTrips: MileageTrip[] = [
     try {
       const rows = getMileageExportRows();
       const buffer = await buildStyledSpreadsheetBuffer({
-        sheetName: 'Mileage',
-        title: 'MONIEZI Mileage Export',
-        fileLabel: `Mileage ${taxPrepYear}`,
+        sheetName: 'Business Mileage Log',
+        title: 'Business Mileage Log',
+        fileLabel: `${(settings.businessName || 'Business').trim() || 'Business'} Business Mileage Log ${taxPrepYear}`,
         columns: [
           { header: 'Date', key: 'date', width: 14 },
           { header: 'Miles', key: 'miles', width: 12 },
