@@ -6237,8 +6237,9 @@ html:not(.dark) .font-semibold { font-weight: 700 !important; }
 html:not(.dark) .font-bold { font-weight: 800 !important; }
 
 /* Slightly crisper borders in light mode */
-html:not(.dark) .border-slate-100 { border-color: rgb(226 232 240) !important; }
-html:not(.dark) .border-slate-200 { border-color: rgb(203 213 225) !important; }
+html:not(.dark) .border-slate-100 { border-color: rgb(232 238 245) !important; }
+html:not(.dark) .border-slate-200 { border-color: rgb(216 224 234) !important; }
+html:not(.dark) .border-slate-300 { border-color: rgb(194 205 218) !important; }
 
 /* Subtle “inkier” shadows in light mode */
 html:not(.dark) .shadow-sm { box-shadow: 0 1px 2px rgba(2, 6, 23, 0.10) !important; }
@@ -6246,7 +6247,7 @@ html:not(.dark) .shadow { box-shadow: 0 1px 3px rgba(2, 6, 23, 0.14), 0 1px 2px 
 html:not(.dark) .shadow-md { box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08), 0 2px 8px rgba(15, 23, 42, 0.04) !important; }
 
 /* Slightly stronger separators */
-html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(203 213 225) !important; }
+html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgb(216 224 234) !important; }
 `}</style>
       <div
         className="flex flex-col max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300"
