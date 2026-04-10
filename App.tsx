@@ -10688,34 +10688,34 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
               <div>
                 <div className="text-2xl font-black tracking-tight text-slate-950 dark:text-white">Quick Add</div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-slate-50">Choose what you want to create.</div>
+                <div className="text-base font-black text-slate-950 dark:text-white">Choose what you want to create.</div>
               </div>
               <button onClick={() => setShowQuickAddMenu(false)} className="p-2 rounded-full text-slate-950 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close quick add"><X size={18} /></button>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4">
-              <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/40 dark:bg-emerald-950/55 dark:hover:bg-emerald-950/75">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-emerald-900 dark:text-emerald-200">Add Income</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-emerald-800 dark:text-emerald-100">Record a payment or deposit.</div>
+              <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-950/60 dark:hover:bg-emerald-950/80">
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-emerald-950 dark:text-emerald-50">Add Income</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-emerald-900 dark:text-emerald-100">Record a payment or deposit.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/40 dark:bg-red-950/55 dark:hover:bg-red-950/75">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-red-900 dark:text-red-200">Add Expense</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-red-800 dark:text-red-100">Log a purchase or bill.</div>
+              <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/50 dark:bg-red-950/60 dark:hover:bg-red-950/80">
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-red-950 dark:text-red-50">Add Expense</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-red-900 dark:text-red-100">Log a purchase or bill.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/40 dark:bg-blue-950/55 dark:hover:bg-blue-950/75">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-blue-900 dark:text-blue-200">New Invoice</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-blue-800 dark:text-blue-100">Create a bill to send.</div>
+              <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:bg-blue-950/80">
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-blue-950 dark:text-blue-50">New Invoice</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-blue-900 dark:text-blue-100">Create a bill to send.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/40 dark:bg-indigo-950/55 dark:hover:bg-indigo-950/75">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-indigo-900 dark:text-indigo-200">New Estimate</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-indigo-800 dark:text-indigo-100">Draft a proposal or quote.</div>
+              <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/50 dark:bg-indigo-950/60 dark:hover:bg-indigo-950/80">
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-indigo-950 dark:text-indigo-50">New Estimate</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-indigo-900 dark:text-indigo-100">Draft a proposal or quote.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-slate-950 dark:text-slate-50">Mileage</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-slate-900 dark:text-slate-100">Go to the mileage tracker.</div>
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-slate-950 dark:text-white">Mileage</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-slate-900 dark:text-slate-50">Go to the mileage tracker.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className="text-[1.08rem] font-black uppercase tracking-wide text-slate-950 dark:text-slate-50">Add Client</div>
-                <div className="mt-1 text-sm font-bold leading-6 text-slate-900 dark:text-slate-100">Create a new client profile.</div>
+                <div className="text-[1.12rem] font-black uppercase tracking-[0.03em] text-slate-950 dark:text-white">Add Client</div>
+                <div className="mt-1 text-sm font-extrabold leading-6 text-slate-900 dark:text-slate-50">Create a new client profile.</div>
               </button>
             </div>
           </div>
