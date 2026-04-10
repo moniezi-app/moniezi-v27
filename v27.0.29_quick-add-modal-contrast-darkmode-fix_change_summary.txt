@@ -1,0 +1,12 @@
+MONIEZI v27.0.29
+
+What changed:
+- fixed Quick Add modal tile contrast in dark mode
+- strengthened Quick Add modal title/subtitle contrast in both themes
+- strengthened tile label and description contrast in light mode
+- changed dark-mode Quick Add colored tiles from washed-out pale surfaces to darker tinted cards with readable text
+- kept Overview empty-state Add Transaction opening the same Quick Add selector as the + button
+
+Validation target:
+- npm ci
+- npm run build
