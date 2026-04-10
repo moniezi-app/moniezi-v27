@@ -6221,7 +6221,12 @@ const demoMileageTrips: MileageTrip[] = [
 
   const useDarkChrome = theme !== 'dark';
   const navInactiveColor = theme === 'dark' ? 'var(--nav-inactive)' : '#e2e8f0';
-  const darkChromeButtonStyle = useDarkChrome ? { color: '#e2e8f0', backgroundColor: '#0f172a', borderColor: '#1e293b' } : undefined;
+  const headerActionButtonStyle: React.CSSProperties = {
+    color: '#e2e8f0',
+    backgroundColor: '#0f172a',
+    borderColor: 'rgba(148, 163, 184, 0.22)',
+    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06)'
+  };
   const darkChromeNavInactiveStyle = useDarkChrome ? { color: '#e2e8f0' } : { color: navInactiveColor };
   const darkChromeNavActiveStyle = useDarkChrome ? { color: '#ffffff' } : undefined;
 
@@ -6836,11 +6841,11 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
       >
         <Logo onClick={() => setCurrentPage(Page.Dashboard)} onDarkSurface={useDarkChrome} />
         <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-           <button onClick={toggleTheme} className={`chrome-btn w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600'}`} style={darkChromeButtonStyle}>{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
+           <button onClick={toggleTheme} className="chrome-btn w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all border text-slate-200 hover:text-white" style={headerActionButtonStyle}>{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
            <button
              onClick={() => setShowInsights(true)}
-             className={`chrome-btn relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-purple-600'}`}
-             style={darkChromeButtonStyle}
+             className="chrome-btn relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all border text-slate-200 hover:text-white"
+             style={headerActionButtonStyle}
              title="Insights"
            >
              <BrainCircuit size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />
@@ -6850,7 +6855,7 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
                </span>
              )}
            </button>
-           <button onClick={() => setCurrentPage(Page.Settings)} className={`chrome-btn w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-950'}`} style={darkChromeButtonStyle}><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
+           <button onClick={() => setCurrentPage(Page.Settings)} className="chrome-btn w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all border text-slate-200 hover:text-white" style={headerActionButtonStyle}><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
         </div>
       </header>
 
