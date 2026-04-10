@@ -3830,6 +3830,13 @@ const demoMileageTrips: MileageTrip[] = [
   };
 
   // --- Mileage Trips ---
+  const normalizeMileageDraftMiles = (rawValue: string) => {
+    const trimmed = rawValue.trim();
+    if (trimmed === '') return '';
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? String(parsed) : rawValue;
+  };
+
   const addMileageTrip = (trip: Omit<MileageTrip, 'id'>) => {
     if (!trip.date) return showToast('Please select a date', 'error');
     if (!trip.purpose?.trim()) return showToast('Please enter a purpose', 'error');
@@ -7743,7 +7750,7 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
                 </div>
                 <div className="md:col-span-1">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 block">Miles</label>
-                  <input type="number" value={newTrip.miles} onChange={e => setNewTrip((p: any) => ({ ...p, miles: Number(e.target.value) }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm font-bold" placeholder="0" />
+                  <input type="number" value={newTrip.miles} onChange={e => setNewTrip((p: any) => ({ ...p, miles: e.target.value }))} onBlur={e => setNewTrip((p: any) => ({ ...p, miles: normalizeMileageDraftMiles(e.target.value) }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm font-bold" placeholder="0" />
                 </div>
                 <div className="md:col-span-3">
                   <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 block">Purpose</label>
@@ -8171,7 +8178,7 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
                     </div>
                     <div className="md:col-span-1">
                       <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 block">Miles</label>
-                      <input type="number" value={newTrip.miles} onChange={e => setNewTrip((p: any) => ({ ...p, miles: e.target.value }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm font-bold" />
+                      <input type="number" value={newTrip.miles} onChange={e => setNewTrip((p: any) => ({ ...p, miles: e.target.value }))} onBlur={e => setNewTrip((p: any) => ({ ...p, miles: normalizeMileageDraftMiles(e.target.value) }))} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-3 py-2 text-sm font-bold" />
                     </div>
                     <div className="md:col-span-3">
                       <label className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2 block">Purpose</label>
