@@ -10694,35 +10694,35 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className={theme === 'dark' ? 'text-[1.9rem] sm:text-[1.95rem] font-extrabold tracking-tight text-white' : 'text-[2rem] sm:text-[2.05rem] font-black tracking-tight text-slate-950'}>Quick Add</div>
-                <div className={theme === 'dark' ? 'text-[0.93rem] sm:text-[0.98rem] font-extrabold text-white' : 'text-[0.95rem] sm:text-base font-black text-slate-950'}>Choose what you want to create.</div>
+                <div className={theme === 'dark' ? 'text-[2rem] sm:text-[2.05rem] font-black tracking-tight text-white' : 'text-[2rem] sm:text-[2.05rem] font-black tracking-tight text-slate-950'}>Quick Add</div>
+                <div className={theme === 'dark' ? 'text-[0.95rem] sm:text-base font-black text-white' : 'text-[0.95rem] sm:text-base font-black text-slate-950'}>Choose what you want to create.</div>
               </div>
               <button onClick={() => setShowQuickAddMenu(false)} className="p-2 rounded-full text-slate-950 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close quick add"><X size={18} /></button>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4">
               <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-950/60 dark:hover:bg-emerald-950/80">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-emerald-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-950'}>Add Income</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-emerald-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-900'}>Record a payment or deposit.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-950'}>Add Income</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-900'}>Record a payment or deposit.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/50 dark:bg-red-950/60 dark:hover:bg-red-950/80">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-red-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-950'}>Add Expense</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-red-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-red-900'}>Log a purchase or bill.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-950'}>Add Expense</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-red-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-red-900'}>Log a purchase or bill.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:bg-blue-950/80">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-blue-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-950'}>New Invoice</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-blue-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-blue-900'}>Create a bill to send.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-950'}>New Invoice</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-blue-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-blue-900'}>Create a bill to send.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/50 dark:bg-indigo-950/60 dark:hover:bg-indigo-950/80">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-indigo-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-950'}>New Estimate</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-indigo-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-900'}>Draft a proposal or quote.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-950'}>New Estimate</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-900'}>Draft a proposal or quote.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Mileage</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Go to the mileage tracker.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Mileage</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Go to the mileage tracker.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'text-[0.98rem] font-extrabold uppercase tracking-[0.02em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Add Client</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.93rem] font-semibold leading-[1.35] text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Create a new client profile.</div>
+                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Add Client</div>
+                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Create a new client profile.</div>
               </button>
             </div>
           </div>
