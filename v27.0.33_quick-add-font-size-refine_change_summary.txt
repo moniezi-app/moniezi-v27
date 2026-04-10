@@ -1,0 +1,8 @@
+MONIEZI v27.0.33
+
+Changes:
+- reduced Quick Add modal font sizes slightly for better visual balance
+- slightly reduced Quick Add title/subtitle sizing
+- slightly reduced Quick Add tile title and description sizing while preserving strong contrast
+- bumped package version to 27.0.33
+- bumped service worker cache version
