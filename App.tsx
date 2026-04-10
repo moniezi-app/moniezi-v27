@@ -6269,10 +6269,12 @@ html:not(.dark) .font-bold { font-weight: 800 !important; }
 /* Quick Add typography lock: keep dark mode text metrics identical to light mode */
 .quick-add-typography-lock,
 .quick-add-typography-lock * {
-  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-family: var(--moniezi-app-font) !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-feature-settings: 'liga' 1, 'calt' 1;
 }
 .quick-add-typography-lock .qa-heading {
   font-size: 2rem;
