@@ -6221,7 +6221,7 @@ const demoMileageTrips: MileageTrip[] = [
 
   const useDarkChrome = theme !== 'dark';
   const navInactiveColor = theme === 'dark' ? 'var(--nav-inactive)' : '#e2e8f0';
-  const darkChromeButtonStyle = useDarkChrome ? { color: '#cbd5e1', backgroundColor: '#0f172a', borderColor: '#1e293b' } : undefined;
+  const darkChromeButtonStyle = useDarkChrome ? { color: '#e2e8f0', backgroundColor: '#0f172a', borderColor: '#1e293b' } : undefined;
   const darkChromeNavInactiveStyle = useDarkChrome ? { color: '#e2e8f0' } : { color: navInactiveColor };
   const darkChromeNavActiveStyle = useDarkChrome ? { color: '#ffffff' } : undefined;
 
@@ -6262,6 +6262,12 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
 
 /* Preserve exact dark-mode chrome when reused in light mode */
 html.theme-light .dark-chrome button { color: inherit; }
+html.theme-light .dark-chrome .chrome-btn,
+html.theme-light .dark-chrome .chrome-btn svg { color: #e2e8f0 !important; stroke: currentColor; }
+html.theme-light .dark-chrome .chrome-btn:hover,
+html.theme-light .dark-chrome .chrome-btn:hover svg { color: #ffffff !important; }
+html.theme-light .dark-chrome .dark-chrome-nav-item { color: #e2e8f0 !important; }
+html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !important; }
 `}</style>
       <div
         className="flex flex-col max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300"
@@ -6825,7 +6831,7 @@ html.theme-light .dark-chrome button { color: inherit; }
       )}
 
       <header 
-        className={`dark-chrome no-print flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 sticky top-0 backdrop-blur-xl z-50 transition-colors duration-300 ${useDarkChrome ? 'bg-slate-950/90 border-b border-slate-800' : 'bg-slatebg/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800'}`}
+        className={`dark-chrome no-print flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 sticky top-0 backdrop-blur-xl z-50 transition-colors duration-300 ${useDarkChrome ? 'bg-slate-950 border-b border-slate-800' : 'bg-slatebg/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800'}`}
         style={{ paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + var(--moniezi-ios-top-pad, 0px)))' }}
       >
         <Logo onClick={() => setCurrentPage(Page.Dashboard)} onDarkSurface={useDarkChrome} />
@@ -10222,12 +10228,12 @@ html.theme-light .dark-chrome button { color: inherit; }
       )}
 
       <div className="dark-chrome no-print fixed bottom-0 left-0 right-0 z-[55] pb-safe">
-        <div className={`${useDarkChrome ? 'bg-slate-950/95 border-t border-slate-800/50' : 'bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-slate-800/50'} backdrop-blur-xl px-1 pt-2 pb-3`}>
+        <div className={`${useDarkChrome ? 'bg-slate-950 border-t border-slate-800/50' : 'bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-slate-800/50'} ${useDarkChrome ? '' : 'backdrop-blur-xl'} px-1 pt-2 pb-3`}>
           <div className="max-w-xl mx-auto flex justify-between items-end relative">
             {/* Home */}
             <button 
               onClick={() => setCurrentPage(Page.Dashboard)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Dashboard ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Dashboard ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Dashboard ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Dashboard ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Dashboard ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10239,7 +10245,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Invoice */}
             <button 
               onClick={() => { setBillingDocType('invoice'); setCurrentPage(Page.Invoices); }} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Invoices && billingDocType === 'invoice' ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Invoices && billingDocType === 'invoice' ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10251,7 +10257,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Estimate */}
             <button 
               onClick={() => { setBillingDocType('estimate'); setCurrentPage(Page.Invoices); }} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Invoices && billingDocType === 'estimate' ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Invoices && billingDocType === 'estimate' ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10263,7 +10269,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Center Nav - Activity */}
             <button 
               onClick={() => setCurrentPage(Page.AllTransactions)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10275,7 +10281,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Mileage */}
             <button 
               onClick={() => setCurrentPage(Page.Mileage)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Mileage ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Mileage ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Mileage ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Mileage ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Mileage ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10287,7 +10293,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Clients */}
             <button 
               onClick={() => setCurrentPage(Page.Clients)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Clients ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Clients ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Clients ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Clients ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Clients ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
@@ -10299,7 +10305,7 @@ html.theme-light .dark-chrome button { color: inherit; }
             {/* Reports */}
             <button 
               onClick={() => setCurrentPage(Page.Reports)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Reports ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              className={`dark-chrome-nav-item ${currentPage === Page.Reports ? 'active' : ''} flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Reports ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
               style={currentPage === Page.Reports ? darkChromeNavActiveStyle : darkChromeNavInactiveStyle}
             >
               <div className={`p-1.5 rounded-lg ${currentPage === Page.Reports ? (useDarkChrome ? 'bg-slate-800' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>

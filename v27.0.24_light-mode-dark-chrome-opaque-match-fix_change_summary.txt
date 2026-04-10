@@ -1,0 +1,7 @@
+MONIEZI v27.0.24
+
+Changes:
+- fixed light-mode reused dark header/footer chrome so it matches dark mode more closely
+- removed translucency/blur bleed on light-mode dark chrome bars
+- forced light icons/text on dark header action buttons and nav items
+- kept source-only ZIP root packaging
