@@ -1,0 +1,8 @@
+MONIEZI v27.0.27
+
+Changes:
+- light mode only: made the three header action button circles slightly lighter on the reused dark header
+- preserved visible ring/border on the header action buttons
+- left dark mode header action button circles unchanged
+- bumped package version to 27.0.27
+- bumped service worker cache version
