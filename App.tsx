@@ -10702,27 +10702,27 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
             <div className="grid grid-cols-2 gap-3 p-4">
               <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-950/60 dark:hover:bg-emerald-950/80">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-950 dark:text-emerald-50">Add Income</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-emerald-900 dark:text-emerald-100">Record a payment or deposit.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-900 dark:text-emerald-100">Record a payment or deposit.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/50 dark:bg-red-950/60 dark:hover:bg-red-950/80">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-950 dark:text-red-50">Add Expense</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-red-900 dark:text-red-100">Log a purchase or bill.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-red-900 dark:text-red-100">Log a purchase or bill.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:bg-blue-950/80">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-950 dark:text-blue-50">New Invoice</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-blue-900 dark:text-blue-100">Create a bill to send.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-blue-900 dark:text-blue-100">Create a bill to send.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/50 dark:bg-indigo-950/60 dark:hover:bg-indigo-950/80">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-950 dark:text-indigo-50">New Estimate</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-indigo-900 dark:text-indigo-100">Draft a proposal or quote.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-900 dark:text-indigo-100">Draft a proposal or quote.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950 dark:text-white">Mileage</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-slate-900 dark:text-slate-50">Go to the mileage tracker.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900 dark:text-slate-50">Go to the mileage tracker.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
                 <div className="text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950 dark:text-white">Add Client</div>
-                <div className="mt-1 text-[0.95rem] font-bold leading-5 text-slate-900 dark:text-slate-50">Create a new client profile.</div>
+                <div className="mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900 dark:text-slate-50">Create a new client profile.</div>
               </button>
             </div>
           </div>
