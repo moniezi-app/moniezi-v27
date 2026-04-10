@@ -6303,7 +6303,7 @@ html:not(.dark) .font-bold { font-weight: 800 !important; }
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.25rem;
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0;
 }
 @media (min-width: 640px) {
