@@ -1,0 +1,6 @@
+v27.0.23
+- fixed light-mode dark header/footer chrome to match dark mode styling more exactly
+- corrected header action button colors and dark-surface logo subtext
+- corrected footer active/inactive colors and active pill styling to match dark mode
+- fixed packaging to match v27.0.21 root-level source-only structure (no extra inner folder)
+- bumped package version and service worker cache version
