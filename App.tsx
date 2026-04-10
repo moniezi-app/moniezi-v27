@@ -6286,7 +6286,13 @@ html:not(.dark) .font-bold { font-weight: 800 !important; }
   font-weight: 900;
   letter-spacing: 0;
 }
+.quick-add-typography-lock .qa-tile-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
 .quick-add-typography-lock .qa-tile-title {
+  margin: 0;
   font-size: 1.02rem;
   line-height: 1.2;
   font-weight: 900;
@@ -6294,7 +6300,7 @@ html:not(.dark) .font-bold { font-weight: 800 !important; }
   text-transform: uppercase;
 }
 .quick-add-typography-lock .qa-tile-desc {
-  margin-top: 0.25rem;
+  margin: 0;
   font-size: 0.95rem;
   line-height: 1.25rem;
   font-weight: 700;
@@ -10744,28 +10750,40 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
             </div>
             <div className="grid grid-cols-2 gap-3 p-4">
               <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-950/60 dark:hover:bg-emerald-950/80">
-                <div className={theme === 'dark' ? 'qa-tile-title text-emerald-50' : 'qa-tile-title text-emerald-950'}>Add Income</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-emerald-100' : 'qa-tile-desc text-emerald-900'}>Record a payment or deposit.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-emerald-50' : 'qa-tile-title text-emerald-950'}>Add Income</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-emerald-100' : 'qa-tile-desc text-emerald-900'}>Record a payment or deposit.</div>
+                </div>
               </button>
               <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/50 dark:bg-red-950/60 dark:hover:bg-red-950/80">
-                <div className={theme === 'dark' ? 'qa-tile-title text-red-50' : 'qa-tile-title text-red-950'}>Add Expense</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-red-100' : 'qa-tile-desc text-red-900'}>Log a purchase or bill.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-red-50' : 'qa-tile-title text-red-950'}>Add Expense</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-red-100' : 'qa-tile-desc text-red-900'}>Log a purchase or bill.</div>
+                </div>
               </button>
               <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:bg-blue-950/80">
-                <div className={theme === 'dark' ? 'qa-tile-title text-blue-50' : 'qa-tile-title text-blue-950'}>New Invoice</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-blue-100' : 'qa-tile-desc text-blue-900'}>Create a bill to send.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-blue-50' : 'qa-tile-title text-blue-950'}>New Invoice</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-blue-100' : 'qa-tile-desc text-blue-900'}>Create a bill to send.</div>
+                </div>
               </button>
               <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/50 dark:bg-indigo-950/60 dark:hover:bg-indigo-950/80">
-                <div className={theme === 'dark' ? 'qa-tile-title text-indigo-50' : 'qa-tile-title text-indigo-950'}>New Estimate</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-indigo-100' : 'qa-tile-desc text-indigo-900'}>Draft a proposal or quote.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-indigo-50' : 'qa-tile-title text-indigo-950'}>New Estimate</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-indigo-100' : 'qa-tile-desc text-indigo-900'}>Draft a proposal or quote.</div>
+                </div>
               </button>
               <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Mileage</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Go to the mileage tracker.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Mileage</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Go to the mileage tracker.</div>
+                </div>
               </button>
               <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Add Client</div>
-                <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Create a new client profile.</div>
+                <div className="qa-tile-copy">
+                  <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Add Client</div>
+                  <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Create a new client profile.</div>
+                </div>
               </button>
             </div>
           </div>
