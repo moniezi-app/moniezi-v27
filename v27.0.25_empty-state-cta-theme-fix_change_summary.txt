@@ -1,0 +1,7 @@
+MONIEZI v27.0.25
+
+Fixed empty-state CTA buttons globally across light and dark mode.
+- Empty-state action buttons now use MONIEZI blue with white text in both themes
+- Fixed unreadable / invisible empty-state button labels
+- Applied globally to activity, all-transactions, invoices, estimates, clients, and other empty-state screens
+- Kept source-only packaging at ZIP root
