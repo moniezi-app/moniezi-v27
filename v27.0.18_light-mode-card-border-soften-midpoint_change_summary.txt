@@ -1,0 +1,6 @@
+MONIEZI v27.0.18
+
+- softened global light-mode card border color from the darker v27.0.17 pass to a midpoint slate blue-gray
+- updated shared light-mode border and divider tone to #748399
+- softened related light-mode ring color to match the new border tone
+- kept dark mode unchanged
