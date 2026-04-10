@@ -1,0 +1,6 @@
+MONIEZI v27.0.17
+
+Changes:
+- strengthened light-mode card borders globally across rounded shadowed card surfaces
+- darkened light-mode border and divider colors to improve card separation on white backgrounds
+- left dark mode unchanged

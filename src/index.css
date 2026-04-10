@@ -160,13 +160,27 @@ html.theme-light .border-slate-200,
 html.theme-light .border-slate-300,
 html.theme-light .border-gray-200,
 html.theme-light .border-gray-300 {
-  border-color: #94a3b8 !important;
+  border-color: #64748b !important;
 }
 
 html.theme-light .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
 html.theme-light .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
 html.theme-light .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-  border-color: #94a3b8 !important;
+  border-color: #64748b !important;
+}
+
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-white"],
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-slate-50"],
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-slate-100"] {
+  border: 1px solid #64748b !important;
+}
+
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-white"].border-0,
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-slate-50"].border-0,
+html.theme-light :is(div, section, article, aside)[class*="rounded"][class*="shadow"][class*="bg-slate-100"].border-0 {
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: #64748b !important;
 }
 
 html.theme-light .shadow-sm {
