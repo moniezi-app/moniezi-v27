@@ -1,0 +1,5 @@
+MONIEZI v27.0.37 - Quick Add typography locked dark mode to light mode
+
+- Scoped the Quick Add modal to a dedicated typography lock so dark mode now uses the same explicit font metrics as light mode.
+- Replaced theme-branch typography classes in the Quick Add title, subtitle, and tiles with shared locked classes; only colors now change by theme.
+- Added a cache version bump so the updated Quick Add modal styling refreshes cleanly after deployment.

@@ -6266,6 +6266,49 @@ html:not(.dark) .font-medium { font-weight: 600 !important; }
 html:not(.dark) .font-semibold { font-weight: 700 !important; }
 html:not(.dark) .font-bold { font-weight: 800 !important; }
 
+/* Quick Add typography lock: keep dark mode text metrics identical to light mode */
+.quick-add-typography-lock,
+.quick-add-typography-lock * {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+.quick-add-typography-lock .qa-heading {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 900;
+  letter-spacing: -0.025em;
+}
+.quick-add-typography-lock .qa-subheading {
+  font-size: 0.95rem;
+  line-height: 1.25rem;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+.quick-add-typography-lock .qa-tile-title {
+  font-size: 1.02rem;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+.quick-add-typography-lock .qa-tile-desc {
+  margin-top: 0.25rem;
+  font-size: 0.95rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+@media (min-width: 640px) {
+  .quick-add-typography-lock .qa-heading {
+    font-size: 2.05rem;
+  }
+  .quick-add-typography-lock .qa-subheading {
+    font-size: 1rem;
+  }
+}
+
 /* Slightly crisper borders in light mode */
 html:not(.dark) .border-slate-100 { border-color: rgb(232 238 245) !important; }
 html:not(.dark) .border-slate-200 { border-color: rgb(216 224 234) !important; }
@@ -10691,38 +10734,38 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
       {/* Client Modal */}
       {showQuickAddMenu && (
         <div className="fixed inset-0 z-[105] flex items-end sm:items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 animate-in fade-in duration-200 modal-overlay" onClick={() => setShowQuickAddMenu(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={(e) => e.stopPropagation()}>
+          <div className="quick-add-typography-lock w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className={theme === 'dark' ? 'text-[2rem] sm:text-[2.05rem] font-black tracking-tight text-white' : 'text-[2rem] sm:text-[2.05rem] font-black tracking-tight text-slate-950'}>Quick Add</div>
-                <div className={theme === 'dark' ? 'text-[0.95rem] sm:text-base font-black text-white' : 'text-[0.95rem] sm:text-base font-black text-slate-950'}>Choose what you want to create.</div>
+                <div className={theme === 'dark' ? 'qa-heading text-white' : 'qa-heading text-slate-950'}>Quick Add</div>
+                <div className={theme === 'dark' ? 'qa-subheading text-white' : 'qa-subheading text-slate-950'}>Choose what you want to create.</div>
               </div>
               <button onClick={() => setShowQuickAddMenu(false)} className="p-2 rounded-full text-slate-950 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close quick add"><X size={18} /></button>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4">
               <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 shadow-sm dark:border-emerald-400/50 dark:bg-emerald-950/60 dark:hover:bg-emerald-950/80">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-emerald-950'}>Add Income</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-emerald-900'}>Record a payment or deposit.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-emerald-50' : 'qa-tile-title text-emerald-950'}>Add Income</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-emerald-100' : 'qa-tile-desc text-emerald-900'}>Record a payment or deposit.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 bg-red-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 shadow-sm dark:border-red-400/50 dark:bg-red-950/60 dark:hover:bg-red-950/80">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-red-950'}>Add Expense</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-red-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-red-900'}>Log a purchase or bill.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-red-50' : 'qa-tile-title text-red-950'}>Add Expense</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-red-100' : 'qa-tile-desc text-red-900'}>Log a purchase or bill.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 shadow-sm dark:border-blue-400/50 dark:bg-blue-950/60 dark:hover:bg-blue-950/80">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-blue-950'}>New Invoice</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-blue-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-blue-900'}>Create a bill to send.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-blue-50' : 'qa-tile-title text-blue-950'}>New Invoice</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-blue-100' : 'qa-tile-desc text-blue-900'}>Create a bill to send.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 bg-indigo-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 shadow-sm dark:border-indigo-400/50 dark:bg-indigo-950/60 dark:hover:bg-indigo-950/80">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-50' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-indigo-950'}>New Estimate</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-100' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-indigo-900'}>Draft a proposal or quote.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-indigo-50' : 'qa-tile-title text-indigo-950'}>New Estimate</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-indigo-100' : 'qa-tile-desc text-indigo-900'}>Draft a proposal or quote.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Mileage</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Go to the mileage tracker.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Mileage</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Go to the mileage tracker.</div>
               </button>
               <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 shadow-sm dark:border-slate-600 dark:bg-slate-800/95 dark:hover:bg-slate-800">
-                <div className={theme === 'dark' ? 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-white' : 'text-[1.02rem] font-black uppercase tracking-[0.025em] text-slate-950'}>Add Client</div>
-                <div className={theme === 'dark' ? 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-50' : 'mt-1 text-[0.95rem] font-semibold leading-5 text-slate-900'}>Create a new client profile.</div>
+                <div className={theme === 'dark' ? 'qa-tile-title text-white' : 'qa-tile-title text-slate-950'}>Add Client</div>
+                <div className={theme === 'dark' ? 'qa-tile-desc text-slate-50' : 'qa-tile-desc text-slate-900'}>Create a new client profile.</div>
               </button>
             </div>
           </div>
