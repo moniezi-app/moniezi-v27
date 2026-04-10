@@ -7147,7 +7147,7 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
                 <button onClick={() => setCurrentPage(Page.AllTransactions)} className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase">See all</button>
               </div>
               <div className="space-y-3">
-                {transactions.length === 0 ? <EmptyState icon={<Sparkles size={24} />} title="No activity yet" subtitle="Your latest transactions will appear here once you start recording." action={() => handleOpenFAB('income')} actionLabel="Add Transaction" /> :
+                {transactions.length === 0 ? <EmptyState icon={<Sparkles size={24} />} title="No activity yet" subtitle="Your latest transactions will appear here once you start recording." action={handleOpenQuickAdd} actionLabel="Add Transaction" /> :
                   transactions.slice().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5).map(t => (
                     <div key={t.id} className="group flex items-center justify-between p-5 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-lg transition-all cursor-pointer shadow-sm relative z-10" onClick={() => handleEditItem(t)}>
                       <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -10687,35 +10687,35 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-200" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800">
               <div>
-                <div className="text-lg font-extrabold text-slate-900 dark:text-white">Quick Add</div>
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400">Choose what you want to create.</div>
+                <div className="text-xl font-black tracking-tight text-slate-950 dark:text-white">Quick Add</div>
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-200">Choose what you want to create.</div>
               </div>
-              <button onClick={() => setShowQuickAddMenu(false)} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Close quick add"><X size={18} /></button>
+              <button onClick={() => setShowQuickAddMenu(false)} className="p-2 rounded-full text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Close quick add"><X size={18} /></button>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4">
-              <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-500/10 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 dark:hover:bg-emerald-500/15">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Add Income</div>
-                <div className="mt-1 text-xs font-medium text-emerald-700/80 dark:text-emerald-300/80">Record a payment or deposit.</div>
+              <button onClick={() => handleQuickAddSelection('income')} className="rounded-xl border border-emerald-300 dark:border-emerald-700/60 bg-emerald-50 dark:bg-emerald-500/12 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-emerald-100 dark:hover:bg-emerald-500/18 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-200">Add Income</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-emerald-800/90 dark:text-emerald-100/95">Record a payment or deposit.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-500/10 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 dark:hover:bg-red-500/15">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-red-700 dark:text-red-300">Add Expense</div>
-                <div className="mt-1 text-xs font-medium text-red-700/80 dark:text-red-300/80">Log a purchase or bill.</div>
+              <button onClick={() => handleQuickAddSelection('expense')} className="rounded-xl border border-red-300 dark:border-red-700/60 bg-red-50 dark:bg-red-500/12 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-red-100 dark:hover:bg-red-500/18 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-red-800 dark:text-red-200">Add Expense</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-red-800/90 dark:text-red-100/95">Log a purchase or bill.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-500/10 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 dark:hover:bg-blue-500/15">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300">New Invoice</div>
-                <div className="mt-1 text-xs font-medium text-blue-700/80 dark:text-blue-300/80">Create a bill to send.</div>
+              <button onClick={() => handleQuickAddSelection('invoice')} className="rounded-xl border border-blue-300 dark:border-blue-700/60 bg-blue-50 dark:bg-blue-500/12 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-blue-100 dark:hover:bg-blue-500/18 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-blue-800 dark:text-blue-200">New Invoice</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-blue-800/90 dark:text-blue-100/95">Create a bill to send.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-500/10 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 dark:hover:bg-indigo-500/15">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">New Estimate</div>
-                <div className="mt-1 text-xs font-medium text-indigo-700/80 dark:text-indigo-300/80">Draft a proposal or quote.</div>
+              <button onClick={() => handleQuickAddSelection('estimate')} className="rounded-xl border border-indigo-300 dark:border-indigo-700/60 bg-indigo-50 dark:bg-indigo-500/12 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-indigo-100 dark:hover:bg-indigo-500/18 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-indigo-800 dark:text-indigo-200">New Estimate</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-indigo-800/90 dark:text-indigo-100/95">Draft a proposal or quote.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 dark:hover:bg-slate-800">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Mileage</div>
-                <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Go to the mileage tracker.</div>
+              <button onClick={() => handleQuickAddSelection('mileage')} className="rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-slate-950 dark:text-white">Mileage</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-slate-700 dark:text-slate-200">Go to the mileage tracker.</div>
               </button>
-              <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/80 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 dark:hover:bg-slate-800">
-                <div className="text-sm font-extrabold uppercase tracking-wider text-slate-900 dark:text-white">Add Client</div>
-                <div className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-300">Create a new client profile.</div>
+              <button onClick={() => handleQuickAddSelection('client')} className="rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/90 px-4 py-4 text-left transition-all active:scale-[0.98] hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm">
+                <div className="text-sm font-black uppercase tracking-wider text-slate-950 dark:text-white">Add Client</div>
+                <div className="mt-1 text-xs font-semibold leading-6 text-slate-700 dark:text-slate-200">Create a new client profile.</div>
               </button>
             </div>
           </div>
