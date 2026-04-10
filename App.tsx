@@ -6843,7 +6843,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                 <div className="p-2 sm:p-2.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 flex-shrink-0">
                   <LayoutGrid size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5} />
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">Home</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">Overview</h2>
               </div>
               <button onClick={handleOpenQuickAdd} className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all flex-shrink-0" aria-label="Add new record"><Plus size={20} className="sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
             </div>
