@@ -161,6 +161,11 @@ const formatDecimalForExport = (value: number | string, digits = 2) => {
 
 const normalize = (s: string) => (s || '').trim().toLowerCase();
 
+const exportButtonPrimaryClass = "px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all border border-blue-600 shadow-sm hover:shadow-md";
+const exportButtonSecondaryClass = "px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-900 active:scale-95 transition-all shadow-sm";
+const exportButtonTonalClass = "px-4 py-3 rounded-lg border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/35 text-blue-700 dark:text-blue-200 font-extrabold uppercase tracking-widest text-xs hover:bg-blue-100 dark:hover:bg-blue-950/55 active:scale-95 transition-all shadow-sm";
+const exportButtonUtilityClass = "px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-900/60 active:scale-95 transition-all shadow-sm";
+
 // --- Utility: Image Compressor ---
 // Returns BOTH a preview DataURL (for UI) and a Blob (for safe IndexedDB storage)
 const compressReceiptImage = (file: File): Promise<{ dataUrl: string; blob: Blob; mimeType: string }> => {
@@ -7697,8 +7702,8 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     </select>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button onClick={handleExportMileageSpreadsheet} className="w-full px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all text-center">Export Mileage Spreadsheet</button>
-                    <button onClick={handleExportMileageCSV} className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all text-center">Export Mileage CSV</button>
+                    <button onClick={handleExportMileageSpreadsheet} className={`${exportButtonTonalClass} w-full text-center`}>Export Mileage Spreadsheet</button>
+                    <button onClick={handleExportMileageCSV} className={`${exportButtonUtilityClass} w-full text-center`}>Export Mileage CSV</button>
                   </div>
                 </div>
               </div>
@@ -7877,7 +7882,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     <button
                       onClick={shareProPLPDF}
                       disabled={isGeneratingProPLPdf}
-                      className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg border border-blue-600 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center gap-2 transition-colors shadow-sm hover:shadow-md disabled:opacity-50"
                     >
                       {isGeneratingProPLPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
                       <span>{isGeneratingProPLPdf ? 'Preparing...' : 'Share PDF'}</span>
@@ -7885,7 +7890,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                     <button
                       onClick={saveProPLPDF}
                       disabled={isGeneratingProPLPdf}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-semibold text-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 text-slate-900 dark:text-white font-semibold text-sm flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50"
                     >
                       {isGeneratingProPLPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                       <span>{isGeneratingProPLPdf ? 'Preparing...' : 'Download PDF'}</span>
@@ -8068,13 +8073,13 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                   
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <button onClick={handleShareTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Share Tax Summary PDF</button>
-                    <button onClick={handleDownloadTaxSummaryPDF} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all">Download Tax Summary PDF</button>
-                    <button onClick={handleExportTaxLedgerSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Tax Transactions Spreadsheet</button>
-                    <button onClick={handleExportMileageSpreadsheet} className="px-4 py-3 rounded-lg bg-blue-600 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-blue-700 active:scale-95 transition-all">Export Mileage Spreadsheet</button>
-                    <button onClick={handleExportTaxLedgerCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Tax Transactions CSV</button>
-                    <button onClick={handleExportMileageCSV} className="px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 font-extrabold uppercase tracking-widest text-xs hover:bg-slate-50 dark:hover:bg-slate-800 active:scale-95 transition-all">Export Mileage CSV</button>
-                    <button onClick={handleExportReceiptsZip} className="px-4 py-3 rounded-lg bg-slate-900 text-white font-extrabold uppercase tracking-widest text-xs hover:bg-slate-800 active:scale-95 transition-all md:col-span-2">Export Linked Receipts ZIP</button>
+                    <button onClick={handleShareTaxSummaryPDF} className={exportButtonPrimaryClass}>Share Tax Summary PDF</button>
+                    <button onClick={handleDownloadTaxSummaryPDF} className={exportButtonSecondaryClass}>Download Tax Summary PDF</button>
+                    <button onClick={handleExportTaxLedgerSpreadsheet} className={exportButtonTonalClass}>Export Tax Transactions Spreadsheet</button>
+                    <button onClick={handleExportMileageSpreadsheet} className={exportButtonTonalClass}>Export Mileage Spreadsheet</button>
+                    <button onClick={handleExportTaxLedgerCSV} className={exportButtonUtilityClass}>Export Tax Transactions CSV</button>
+                    <button onClick={handleExportMileageCSV} className={exportButtonUtilityClass}>Export Mileage CSV</button>
+                    <button onClick={handleExportReceiptsZip} className={`${exportButtonUtilityClass} md:col-span-2`}>Export Linked Receipts ZIP</button>
                   </div>
 
                   <div className="mt-6 bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-xl p-5">
