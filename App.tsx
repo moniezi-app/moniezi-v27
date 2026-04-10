@@ -540,7 +540,7 @@ const getCategoryIcon = (category: string) => {
 
 // --- Components ---
 
-const Logo: React.FC<{ size?: 'sm' | 'lg', onClick?: () => void, forceDarkText?: boolean }> = ({ size = 'sm', onClick, forceDarkText = false }) => {
+const Logo: React.FC<{ size?: 'sm' | 'lg', onClick?: () => void, forceDarkText?: boolean, onDarkSurface?: boolean }> = ({ size = 'sm', onClick, forceDarkText = false, onDarkSurface = false }) => {
   const isLarge = size === 'lg';
   return (
     <div 
@@ -556,11 +556,11 @@ const Logo: React.FC<{ size?: 'sm' | 'lg', onClick?: () => void, forceDarkText?:
         </div>
       </div>
       <div className="flex flex-col leading-none min-w-0">
-        <div className={`font-brand uppercase tracking-[0.18em] sm:tracking-[0.22em] ${isLarge ? 'text-2xl' : 'text-base sm:text-lg'} ${forceDarkText ? 'text-slate-950' : 'text-slate-950 dark:text-white'}`} style={{ whiteSpace: 'nowrap' }}>
+        <div className={`font-brand uppercase tracking-[0.18em] sm:tracking-[0.22em] ${isLarge ? 'text-2xl' : 'text-base sm:text-lg'} ${onDarkSurface ? 'text-white' : forceDarkText ? 'text-slate-950' : 'text-slate-950 dark:text-white'}`} style={{ whiteSpace: 'nowrap' }}>
           <span className="font-bold">Moni</span>
-          <span className={`font-bold ${forceDarkText ? 'text-blue-700' : 'bg-gradient-to-r bg-clip-text text-transparent from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400'}`}>ezi</span>
+          <span className={`font-bold ${onDarkSurface ? 'bg-gradient-to-r bg-clip-text text-transparent from-blue-400 to-indigo-300' : forceDarkText ? 'text-blue-700' : 'bg-gradient-to-r bg-clip-text text-transparent from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400'}`}>ezi</span>
         </div>
-        <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.22em] text-slate-600 dark:text-slate-300 mt-0.5 sm:mt-1 pl-0.5`} style={{ whiteSpace: 'nowrap' }}>
+        <div className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.18em] sm:tracking-[0.22em] ${onDarkSurface ? 'text-slate-300' : 'text-slate-600 dark:text-slate-300'} mt-0.5 sm:mt-1 pl-0.5`} style={{ whiteSpace: 'nowrap' }}>
           Pro Finance
         </div>
        
@@ -6219,6 +6219,9 @@ const demoMileageTrips: MileageTrip[] = [
     );
   }
 
+  const useDarkChrome = theme !== 'dark';
+  const navInactiveColor = theme === 'dark' ? 'var(--nav-inactive)' : 'rgba(226, 232, 240, 0.86)';
+
   return (
     <>
       <style>{`
@@ -6816,15 +6819,15 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       )}
 
       <header 
-        className={`no-print flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 sticky top-0 bg-slatebg/90 dark:bg-slate-950/90 backdrop-blur-xl z-50 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300`}
+        className={`no-print flex items-center justify-between px-4 sm:px-6 md:px-8 pb-4 sm:pb-6 sticky top-0 backdrop-blur-xl z-50 transition-colors duration-300 ${useDarkChrome ? 'bg-slate-950/95 border-b border-slate-800/80' : 'bg-slatebg/90 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800'}`}
         style={{ paddingTop: 'max(1rem, calc(env(safe-area-inset-top, 0px) + var(--moniezi-ios-top-pad, 0px)))' }}
       >
-        <Logo onClick={() => setCurrentPage(Page.Dashboard)} />
+        <Logo onClick={() => setCurrentPage(Page.Dashboard)} onDarkSurface={useDarkChrome} />
         <div className="flex gap-1.5 sm:gap-2 flex-shrink-0">
-           <button onClick={toggleTheme} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 transition-all shadow-md">{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
+           <button onClick={toggleTheme} className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-white/8 border border-white/10 text-white hover:text-blue-300 shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600'}`}>{theme === 'dark' ? <Sun size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /> : <Moon size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />}</button>
            <button
              onClick={() => setShowInsights(true)}
-             className="relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-purple-600 transition-all shadow-md"
+             className={`relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-white/8 border border-white/10 text-white hover:text-purple-300 shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-purple-600'}`}
              title="Insights"
            >
              <BrainCircuit size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} />
@@ -6834,7 +6837,7 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
                </span>
              )}
            </button>
-           <button onClick={() => setCurrentPage(Page.Settings)} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white dark:bg-slate-900 rounded-full border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-950 transition-all shadow-md"><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
+           <button onClick={() => setCurrentPage(Page.Settings)} className={`w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full transition-all shadow-md ${useDarkChrome ? 'bg-white/8 border border-white/10 text-white hover:text-slate-200 shadow-black/20' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-950'}`}><Settings size={18} className="sm:w-5 sm:h-5" strokeWidth={1.2} /></button>
         </div>
       </header>
 
@@ -10212,90 +10215,90 @@ html:not(.dark) .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-col
       )}
 
       <div className="no-print fixed bottom-0 left-0 right-0 z-[55] pb-safe">
-        <div className="bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800/50 px-1 pt-2 pb-3">
+        <div className={`${useDarkChrome ? 'bg-slate-950/95 border-t border-slate-800/80' : 'bg-white/95 dark:bg-slate-950/95 border-t border-slate-200 dark:border-slate-800/50'} backdrop-blur-xl px-1 pt-2 pb-3`}>
           <div className="max-w-xl mx-auto flex justify-between items-end relative">
             {/* Home */}
             <button 
               onClick={() => setCurrentPage(Page.Dashboard)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Dashboard ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Dashboard ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Dashboard ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Dashboard ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Dashboard ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Dashboard ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <LayoutGrid size={20} strokeWidth={currentPage === Page.Dashboard ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Dashboard ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Dashboard ? undefined : 'var(--nav-inactive)' }}>Home</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Dashboard ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Dashboard ? undefined : navInactiveColor }}>Home</span>
             </button>
 
             {/* Invoice */}
             <button 
               onClick={() => { setBillingDocType('invoice'); setCurrentPage(Page.Invoices); }} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Invoices && billingDocType === 'invoice' ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Invoices && billingDocType === 'invoice' ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'invoice' ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <FileText size={20} strokeWidth={currentPage === Page.Invoices && billingDocType === 'invoice' ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Invoices && billingDocType === 'invoice' ? undefined : 'var(--nav-inactive)' }}>Invoice</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Invoices && billingDocType === 'invoice' ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Invoices && billingDocType === 'invoice' ? undefined : navInactiveColor }}>Invoice</span>
             </button>
 
             {/* Estimate */}
             <button 
               onClick={() => { setBillingDocType('estimate'); setCurrentPage(Page.Invoices); }} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Invoices && billingDocType === 'estimate' ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Invoices && billingDocType === 'estimate' ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'estimate' ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <ClipboardList size={20} strokeWidth={currentPage === Page.Invoices && billingDocType === 'estimate' ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Invoices && billingDocType === 'estimate' ? undefined : 'var(--nav-inactive)' }}>Estimate</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Invoices && billingDocType === 'estimate' ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Invoices && billingDocType === 'estimate' ? undefined : navInactiveColor }}>Estimate</span>
             </button>
 
             {/* Center Nav - Activity */}
             <button 
               onClick={() => setCurrentPage(Page.AllTransactions)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <History size={20} strokeWidth={(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : 'var(--nav-inactive)' }}>Activity</span>
+              <span className={`text-[11px] mt-0.5 ${(currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: (currentPage === Page.AllTransactions || currentPage === Page.Ledger) ? undefined : navInactiveColor }}>Activity</span>
             </button>
 
             {/* Mileage */}
             <button 
               onClick={() => setCurrentPage(Page.Mileage)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Mileage ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Mileage ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Mileage ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Mileage ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Mileage ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Mileage ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <Car size={20} strokeWidth={currentPage === Page.Mileage ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Mileage ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Mileage ? undefined : 'var(--nav-inactive)' }}>Mileage</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Mileage ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Mileage ? undefined : navInactiveColor }}>Mileage</span>
             </button>
 
             {/* Clients */}
             <button 
               onClick={() => setCurrentPage(Page.Clients)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Clients ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Clients ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Clients ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Clients ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Clients ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Clients ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <Users size={20} strokeWidth={currentPage === Page.Clients ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Clients ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Clients ? undefined : 'var(--nav-inactive)' }}>Clients</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Clients ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Clients ? undefined : navInactiveColor }}>Clients</span>
             </button>
 
             {/* Reports */}
             <button 
               onClick={() => setCurrentPage(Page.Reports)} 
-              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Reports ? 'text-blue-600 dark:text-white' : ''}`}
-              style={{ color: currentPage === Page.Reports ? undefined : 'var(--nav-inactive)' }}
+              className={`flex-1 flex flex-col items-center justify-center py-1 transition-all active:scale-95 ${currentPage === Page.Reports ? (useDarkChrome ? 'text-white' : 'text-blue-600 dark:text-white') : ''}`}
+              style={{ color: currentPage === Page.Reports ? undefined : navInactiveColor }}
             >
-              <div className={`p-1.5 rounded-lg ${currentPage === Page.Reports ? 'bg-blue-100 dark:bg-slate-800' : ''}`}>
+              <div className={`p-1.5 rounded-lg ${currentPage === Page.Reports ? (useDarkChrome ? 'bg-blue-500/12 ring-1 ring-white/10' : 'bg-blue-100 dark:bg-slate-800') : ''}`}>
                 <BarChart3 size={20} strokeWidth={currentPage === Page.Reports ? 2 : 1.5} />
               </div>
-              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Reports ? 'font-bold text-blue-600 dark:text-white' : 'font-semibold'}`} style={{ color: currentPage === Page.Reports ? undefined : 'var(--nav-inactive)' }}>Reports</span>
+              <span className={`text-[11px] mt-0.5 ${currentPage === Page.Reports ? (useDarkChrome ? 'font-bold text-white' : 'font-bold text-blue-600 dark:text-white') : 'font-semibold'}`} style={{ color: currentPage === Page.Reports ? undefined : navInactiveColor }}>Reports</span>
             </button>
           </div>
         </div>

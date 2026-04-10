@@ -1,0 +1,9 @@
+MONIEZI v27.0.21
+
+Changes:
+- In light mode, changed the sticky header to the same dark navy chrome used by the dark scheme.
+- In light mode, changed the sticky footer to the same dark navy chrome used by the dark scheme.
+- Updated light-mode header action buttons for readability on the dark header.
+- Updated light-mode footer active/inactive navigation colors and active pill styling for the dark footer.
+- Updated logo text treatment on the header when shown on a dark surface.
+- Kept page content area light and kept dark mode unchanged.
