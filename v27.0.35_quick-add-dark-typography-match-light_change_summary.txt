@@ -1,0 +1,12 @@
+MONIEZI v27.0.35 - Quick Add dark typography match light
+
+Changes:
+- refined Quick Add dark-mode typography to visually match light-mode sizing and weight more closely
+- reduced dark-mode Quick Add title size/weight slightly
+- reduced dark-mode tile title size/weight slightly
+- reduced dark-mode description size/line-height slightly
+- kept light-mode Quick Add unchanged
+
+Validation:
+- npm ci passed
+- npm run build passed
