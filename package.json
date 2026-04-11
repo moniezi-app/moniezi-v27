@@ -1,7 +1,7 @@
 {
   "name": "moniezi-core",
   "private": true,
-  "version": "27.0.40",
+  "version": "27.0.41",
   "type": "module",
   "scripts": {
     "dev": "vite",

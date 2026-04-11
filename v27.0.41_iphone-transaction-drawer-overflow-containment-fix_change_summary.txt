@@ -1,0 +1,7 @@
+MONIEZI v27.0.41
+
+- Fixed iPhone add/edit transaction drawer horizontal overflow and sideways drift
+- Added drawer safe-area top/bottom padding and width containment
+- Forced mobile transaction inputs to 16px in drawer to reduce iPhone zoom/viewport instability
+- Collapsed invoice/estimate line item rows and totals inputs safely on narrow iPhone widths
+- Added app shell and drawer overflow-x containment

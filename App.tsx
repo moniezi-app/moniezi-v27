@@ -658,14 +658,24 @@ const Drawer: React.FC<{ isOpen: boolean; onClose: () => void; title: string; ch
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md p-0 sm:p-4 transition-all modal-overlay">
       <div className="fixed inset-0" onClick={onClose} />
-      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] animate-in slide-in-from-bottom duration-300" style={{ maxWidth: '100%' }}>
-        <div className="flex items-center justify-between p-8 pb-4">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">{title}</h2>
-          <button onClick={onClose} aria-label="Close" className="p-2 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors">
+      <div
+        className="drawer-shell relative w-full bg-white dark:bg-slate-900 rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-bottom duration-300"
+        style={{
+          width: '100%',
+          maxWidth: 'min(100vw, 32rem)',
+          maxHeight: 'calc((var(--moniezi-app-vh, 1vh) * 100) - env(safe-area-inset-top, 0px))',
+        }}
+      >
+        <div
+          className="drawer-header flex items-center justify-between gap-4 px-5 sm:px-8 pb-4"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+        >
+          <h2 className="min-w-0 text-2xl font-bold text-slate-900 dark:text-white tracking-tight break-words">{title}</h2>
+          <button onClick={onClose} aria-label="Close" className="shrink-0 p-2 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors">
             <X size={28} strokeWidth={1.5} />
           </button>
         </div>
-        <div className="px-8 pb-8 modal-scroll-area custom-scrollbar">
+        <div className="drawer-scroll-area px-4 sm:px-8 pb-8 modal-scroll-area custom-scrollbar" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
           {children}
         </div>
       </div>
@@ -6338,9 +6348,90 @@ html.theme-light .dark-chrome .chrome-btn:hover,
 html.theme-light .dark-chrome .chrome-btn:hover svg { color: #ffffff !important; }
 html.theme-light .dark-chrome .dark-chrome-nav-item { color: #e2e8f0 !important; }
 html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !important; }
+
+
+/* iPhone transaction drawer containment pass */
+html, body, #root {
+  max-width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+}
+.moniezi-app-shell {
+  width: 100%;
+  max-width: min(100vw, 42rem);
+  overflow-x: hidden;
+}
+.drawer-shell,
+.drawer-scroll-area,
+.drawer-scroll-area > div {
+  min-width: 0;
+  max-width: 100%;
+}
+.drawer-scroll-area {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.drawer-scroll-area,
+.drawer-scroll-area * {
+  box-sizing: border-box;
+}
+.drawer-scroll-area .flex,
+.drawer-scroll-area .grid {
+  min-width: 0;
+}
+.drawer-scroll-area .flex > *,
+.drawer-scroll-area .grid > * {
+  min-width: 0;
+}
+.drawer-scroll-area input,
+.drawer-scroll-area select,
+.drawer-scroll-area textarea,
+.drawer-scroll-area button {
+  max-width: 100%;
+}
+@supports (overflow: clip) {
+  .moniezi-app-shell,
+  .drawer-shell,
+  .drawer-scroll-area {
+    overflow-x: clip;
+  }
+}
+@media (max-width: 430px) {
+  .drawer-scroll-area input,
+  .drawer-scroll-area select,
+  .drawer-scroll-area textarea {
+    font-size: 16px !important;
+  }
+  .mobile-billing-line-item {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .mobile-billing-line-item-fields {
+    width: 100%;
+  }
+  .mobile-billing-line-item-meta {
+    flex-direction: column;
+  }
+  .mobile-billing-line-item-qty,
+  .mobile-billing-line-item-rate,
+  .mobile-billing-summary-row .mobile-billing-summary-input {
+    width: 100% !important;
+  }
+  .mobile-billing-line-item-remove {
+    align-self: flex-end;
+    padding-top: 0;
+  }
+  .mobile-billing-summary-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+}
 `}</style>
       <div
-        className="flex flex-col max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300"
+        className="moniezi-app-shell flex flex-col w-full max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300"
         style={{
           height: 'calc(var(--moniezi-app-vh, 1vh) * 100)',
           minHeight: 'calc(var(--moniezi-app-vh, 1vh) * 100)',
@@ -10540,12 +10631,12 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><DateInput label="Date" value={activeItem.date || ''} onChange={v => setActiveItem(prev => ({ ...prev, date: v }))} /><DateInput label={billingDocType === 'estimate' ? "Valid Until" : "Due Date"} value={(billingDocType === 'estimate' ? (activeItem.validUntil as any) : activeItem.due) || ''} onChange={v => setActiveItem(prev => billingDocType === 'estimate' ? ({ ...prev, validUntil: v }) : ({ ...prev, due: v }))} /></div>
                       <div className="bg-slate-50 dark:bg-slate-900 p-1 rounded-lg border border-slate-100 dark:border-slate-800">
                           <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-800"><h4 className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">Line Items</h4><button onClick={addInvoiceItem} className="text-xs font-bold text-blue-600 flex items-center gap-1 hover:underline"><PlusCircle size={14}/> Add Item</button></div>
-                          <div className="p-2 space-y-2">{(activeItem.items || []).map((item, idx) => (<div key={item.id} className="flex gap-2 items-start animate-in fade-in slide-in-from-left-2"><div className="flex-1 space-y-2"><input type="text" value={item.description} onChange={(e) => updateInvoiceItem(item.id, 'description', e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="Description" /><div className="flex gap-2"><div className="relative w-20"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">Qty</span><input type="number" value={item.quantity || ''} onChange={(e) => updateInvoiceItem(item.id, 'quantity', Number(e.target.value))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded pl-8 pr-2 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500 text-center" placeholder="0"/></div><div className="relative flex-1"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={item.rate || ''} onChange={(e) => updateInvoiceItem(item.id, 'rate', Number(e.target.value))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded pl-6 pr-2 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="0.00" /></div></div></div><div className="pt-2"><button onClick={() => removeInvoiceItem(item.id)} className="text-slate-400 hover:text-red-500 p-1"><MinusCircle size={18} /></button></div></div>))}{(activeItem.items || []).length === 0 && <div className="text-center py-4 text-xs text-slate-400 italic">No items added. Add at least one item.</div>}</div>
+                          <div className="p-2 space-y-2">{(activeItem.items || []).map((item, idx) => (<div key={item.id} className="mobile-billing-line-item flex gap-2 items-start animate-in fade-in slide-in-from-left-2"><div className="mobile-billing-line-item-fields min-w-0 flex-1 space-y-2"><input type="text" value={item.description} onChange={(e) => updateInvoiceItem(item.id, 'description', e.target.value)} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="Description" /><div className="mobile-billing-line-item-meta flex gap-2"><div className="mobile-billing-line-item-qty relative w-20"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">Qty</span><input type="number" value={item.quantity || ''} onChange={(e) => updateInvoiceItem(item.id, 'quantity', Number(e.target.value))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded pl-8 pr-2 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500 text-center" placeholder="0"/></div><div className="mobile-billing-line-item-rate relative flex-1"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={item.rate || ''} onChange={(e) => updateInvoiceItem(item.id, 'rate', Number(e.target.value))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded pl-6 pr-2 py-2 text-sm outline-none focus:ring-1 focus:ring-blue-500" placeholder="0.00" /></div></div></div><div className="mobile-billing-line-item-remove pt-2"><button onClick={() => removeInvoiceItem(item.id)} className="text-slate-400 hover:text-red-500 p-1"><MinusCircle size={18} /></button></div></div>))}{(activeItem.items || []).length === 0 && <div className="text-center py-4 text-xs text-slate-400 italic">No items added. Add at least one item.</div>}</div>
                           <div className="p-3 bg-slate-100 dark:bg-slate-900/50 rounded-b-lg space-y-2">
                               <div className="flex justify-between text-xs text-slate-600 dark:text-slate-300"><span>Subtotal</span><span>{formatCurrency.format(activeInvoiceTotals.subtotal)}</span></div>
-                              <div className="flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Discount</label><div className="relative w-24"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={activeItem.discount || ''} onChange={e => setActiveItem(p => ({...p, discount: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-5 pr-1 text-xs text-right outline-none" placeholder="0" /></div></div>
-                              <div className="flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Tax Rate</label><div className="relative w-24"><input type="number" value={activeItem.taxRate || ''} onChange={e => setActiveItem(p => ({...p, taxRate: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-1 pr-5 text-xs text-right outline-none" placeholder="0" /><span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">%</span></div></div>
-                              {billingDocType !== 'estimate' && <div className="flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Shipping</label><div className="relative w-24"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={activeItem.shipping || ''} onChange={e => setActiveItem(p => ({...p, shipping: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-5 pr-1 text-xs text-right outline-none" placeholder="0" /></div></div>}
+                              <div className="mobile-billing-summary-row flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Discount</label><div className="mobile-billing-summary-input relative w-24 shrink-0"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={activeItem.discount || ''} onChange={e => setActiveItem(p => ({...p, discount: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-5 pr-1 text-xs text-right outline-none" placeholder="0" /></div></div>
+                              <div className="mobile-billing-summary-row flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Tax Rate</label><div className="mobile-billing-summary-input relative w-24 shrink-0"><input type="number" value={activeItem.taxRate || ''} onChange={e => setActiveItem(p => ({...p, taxRate: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-1 pr-5 text-xs text-right outline-none" placeholder="0" /><span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">%</span></div></div>
+                              {billingDocType !== 'estimate' && <div className="mobile-billing-summary-row flex items-center justify-between gap-4"><label className="text-xs text-slate-600 dark:text-slate-300">Shipping</label><div className="mobile-billing-summary-input relative w-24 shrink-0"><span className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-300 text-xs">$</span><input type="number" value={activeItem.shipping || ''} onChange={e => setActiveItem(p => ({...p, shipping: Number(e.target.value)}))} className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded py-1 pl-5 pr-1 text-xs text-right outline-none" placeholder="0" /></div></div>}
                               <div className="flex justify-between text-sm font-bold pt-2 border-t border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white"><span>{billingDocType === 'estimate' ? 'Estimated Total' : 'Total Due'}</span><span>{formatCurrency.format(activeInvoiceTotals.total)}</span></div>
                           </div>
                       </div>
