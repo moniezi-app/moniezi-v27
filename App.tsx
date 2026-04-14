@@ -654,6 +654,49 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
 );
 
 const Drawer: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
+  // iOS keyboard scroll-into-view fix:
+  // When body is position:fixed (modal-open), iOS can't auto-scroll inputs into view.
+  // We manually scroll the drawer's scroll area so the focused input is visible.
+  useEffect(() => {
+    if (!isOpen) return;
+    const scrollArea = scrollAreaRef.current;
+    if (!scrollArea) return;
+
+    const handleFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target || !('tagName' in target)) return;
+      const tag = target.tagName.toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') return;
+
+      // Delay to let iOS keyboard finish animating open (~400ms)
+      const timerId = setTimeout(() => {
+        if (!scrollArea.contains(target)) return;
+
+        // Use visualViewport to detect keyboard presence and available height
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        const targetRect = target.getBoundingClientRect();
+        const scrollAreaRect = scrollArea.getBoundingClientRect();
+
+        // Calculate where the target is relative to the visible area
+        // We want the input to be roughly 40% from the top of visible area
+        const desiredTop = viewportHeight * 0.35;
+        const currentTop = targetRect.top;
+        const diff = currentTop - desiredTop;
+
+        if (diff > 20 || targetRect.bottom > viewportHeight - 10) {
+          scrollArea.scrollBy({ top: diff, behavior: 'smooth' });
+        }
+      }, 420);
+
+      return () => clearTimeout(timerId);
+    };
+
+    scrollArea.addEventListener('focusin', handleFocus, { passive: true });
+    return () => scrollArea.removeEventListener('focusin', handleFocus);
+  }, [isOpen]);
+
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-[60] flex items-stretch sm:items-center justify-center bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md p-0 sm:p-4 transition-all modal-overlay">
@@ -675,7 +718,7 @@ const Drawer: React.FC<{ isOpen: boolean; onClose: () => void; title: string; ch
             <X size={28} strokeWidth={1.5} />
           </button>
         </div>
-        <div className="drawer-scroll-area px-4 sm:px-8 pb-8 modal-scroll-area custom-scrollbar" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
+        <div ref={scrollAreaRef} className="drawer-scroll-area px-4 sm:px-8 pb-8 modal-scroll-area custom-scrollbar" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)' }}>
           {children}
         </div>
       </div>
@@ -2016,6 +2059,36 @@ export default function App() {
   useEffect(() => {
     if (showInsights) { lockBodyScroll(); return () => { unlockBodyScroll(); }; }
   }, [showInsights, lockBodyScroll, unlockBodyScroll]);
+
+  // iOS keyboard scroll-into-view fix for the MAIN scroll area
+  // (Mileage page, Settings, etc. — inputs not inside the Drawer)
+  // When body is position:fixed, iOS can't auto-scroll inputs into view.
+  useEffect(() => {
+    const scrollArea = mainScrollRef.current;
+    if (!scrollArea) return;
+
+    const handleFocus = (e: FocusEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target || !('tagName' in target)) return;
+      const tag = target.tagName.toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') return;
+
+      // Delay to allow iOS keyboard animation to finish
+      setTimeout(() => {
+        if (!scrollArea.contains(target)) return;
+        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+        const targetRect = target.getBoundingClientRect();
+        const desiredTop = viewportHeight * 0.35;
+        const diff = targetRect.top - desiredTop;
+        if (diff > 20 || targetRect.bottom > viewportHeight - 10) {
+          scrollArea.scrollBy({ top: diff, behavior: 'smooth' });
+        }
+      }, 420);
+    };
+
+    scrollArea.addEventListener('focusin', handleFocus, { passive: true });
+    return () => scrollArea.removeEventListener('focusin', handleFocus);
+  }, [currentPage]); // re-attach when page changes since mainScrollRef changes via key
 
   const findMatchingClientId = useCallback((data: Partial<Invoice> & Partial<Estimate>) => {
     const email = normalize((data as any).clientEmail || '');
@@ -6406,7 +6479,7 @@ html, body, #root {
 .drawer-scroll-area button {
   max-width: 100%;
 }
-/* clip is used directly above — no @supports fallback needed */
+/* clip is used directly — no @supports fallback needed */
 @media (max-width: 430px) {
   .moniezi-app-shell {
     width: 100%;
