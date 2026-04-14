@@ -656,14 +656,14 @@ const DateInput = ({ label, value, onChange }: { label: string, value: string, o
 const Drawer: React.FC<{ isOpen: boolean; onClose: () => void; title: string; children: React.ReactNode }> = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md p-0 sm:p-4 transition-all modal-overlay">
+    <div className="fixed inset-0 z-[60] flex items-stretch sm:items-center justify-center bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md p-0 sm:p-4 transition-all modal-overlay">
       <div className="fixed inset-0" onClick={onClose} />
       <div
-        className="drawer-shell relative w-full bg-white dark:bg-slate-900 rounded-t-xl sm:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-bottom duration-300"
+        className="drawer-shell relative w-full h-full sm:h-auto bg-white dark:bg-slate-900 rounded-none sm:rounded-xl shadow-2xl border-0 sm:border border-slate-200 dark:border-slate-800 flex flex-col animate-in slide-in-from-bottom duration-300"
         style={{
           width: '100%',
-          maxWidth: 'min(100vw, 32rem)',
-          maxHeight: 'calc((var(--moniezi-app-vh, 1vh) * 100) - env(safe-area-inset-top, 0px))',
+          maxWidth: 'min(100%, 32rem)',
+          maxHeight: 'calc(var(--moniezi-app-vh, 1vh) * 100)',
         }}
       >
         <div
@@ -720,13 +720,13 @@ const PeriodSelector: React.FC<{
   };
 
   return (
-    <div className="mb-6 space-y-4">
-       <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 overflow-x-auto custom-scrollbar">
+    <div className="mb-6 space-y-4 min-w-0 max-w-full">
+       <div className="grid grid-cols-5 bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 min-w-0 max-w-full">
           {(['all', 'daily', 'weekly', 'monthly', 'yearly'] as FilterPeriod[]).map(p => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`flex-1 min-w-[60px] py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+              className={`min-w-0 py-1.5 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
                 period === p 
                 ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-white shadow-sm' 
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-200'
@@ -738,11 +738,11 @@ const PeriodSelector: React.FC<{
        </div>
 
        {period !== 'all' && (
-         <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+         <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm min-w-0 max-w-full">
             <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-500 dark:text-slate-200 transition-colors">
                <ChevronLeft size={20} />
             </button>
-            <div className="flex items-center gap-2 font-brand font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wide">
+            <div className="flex items-center justify-center gap-2 min-w-0 flex-1 text-center font-brand font-bold text-slate-900 dark:text-white text-sm uppercase tracking-wide">
                <Calendar size={16} className="text-blue-500 mb-0.5" />
                {getLabel()}
             </div>
@@ -977,6 +977,12 @@ export default function App() {
         '--moniezi-ios-top-pad',
         isAppleMobile ? `${Math.max(16, Math.round(offsetTop + 16))}px` : '0px'
       );
+
+      if (isAppleMobile) {
+        document.documentElement.scrollLeft = 0;
+        document.body.scrollLeft = 0;
+        window.scrollTo({ left: 0, top: window.scrollY, behavior: 'instant' as ScrollBehavior });
+      }
     };
 
     updateViewportVars();
@@ -6358,8 +6364,15 @@ html, body, #root {
 }
 .moniezi-app-shell {
   width: 100%;
-  max-width: min(100vw, 42rem);
+  max-width: 42rem;
+  margin-left: auto;
+  margin-right: auto;
   overflow-x: hidden;
+}
+.main-scroll-lock,
+.main-scroll-lock > div {
+  min-width: 0;
+  max-width: 100%;
 }
 .drawer-shell,
 .drawer-scroll-area,
@@ -6399,6 +6412,23 @@ html, body, #root {
   }
 }
 @media (max-width: 430px) {
+  .moniezi-app-shell {
+    width: 100%;
+    max-width: 100%;
+  }
+  .drawer-shell {
+    width: 100%;
+    max-width: 100%;
+    min-height: calc(var(--moniezi-app-vh, 1vh) * 100);
+  }
+  .drawer-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .drawer-scroll-area {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
   .drawer-scroll-area input,
   .drawer-scroll-area select,
   .drawer-scroll-area textarea {
@@ -7015,7 +7045,7 @@ html, body, #root {
         </div>
       </header>
 
-      <div key={`main-scroll-${currentPage}`} ref={mainScrollRef} className="flex-1 min-h-0 overflow-y-auto px-6 md:px-8 pt-5 sm:pt-6 md:pt-7 no-print custom-scrollbar" style={{ paddingBottom: 'calc(11rem + env(safe-area-inset-bottom, 0px))' }} role="main">
+      <div key={`main-scroll-${currentPage}`} ref={mainScrollRef} className="main-scroll-lock flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-8 pt-5 sm:pt-6 md:pt-7 no-print custom-scrollbar" style={{ paddingBottom: 'calc(11rem + env(safe-area-inset-bottom, 0px))' }} role="main">
 
       <PageErrorBoundary key={currentPage} onReset={() => setCurrentPage(Page.Dashboard)}>
 
@@ -7557,19 +7587,19 @@ html, body, #root {
         )}
 
         {(currentPage === Page.Invoices) && (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4">
-            <div className="flex items-center justify-between gap-2">
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 min-w-0 max-w-full">
+            <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between min-w-0">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="p-2 sm:p-2.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 flex-shrink-0">
                   <FileText size={20} className="sm:w-6 sm:h-6" strokeWidth={1.5} />
                 </div>
-                <div className="flex flex-col gap-2 sm:gap-3 min-w-0">
+                <div className="flex flex-col gap-2 sm:gap-3 min-w-0 w-full sm:w-auto">
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-950 dark:text-white font-brand">{billingDocType === 'estimate' ? 'Estimates' : 'Invoices'}</h2>
                   {/* Redesigned Invoices/Estimates Segmented Tabs */}
-                  <div className="inline-flex w-fit bg-slate-200/80 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 shadow-sm">
+                  <div className="grid grid-cols-2 w-full sm:w-fit bg-slate-200/80 dark:bg-slate-900 p-1.5 rounded-xl border border-slate-300/50 dark:border-slate-700/50 shadow-sm">
                     <button 
                       onClick={() => { setBillingDocType('invoice'); setInvoiceQuickFilter('all'); }} 
-                      className={`px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-bold uppercase tracking-wide transition-all ${
+                      className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-bold uppercase tracking-wide transition-all ${
                         billingDocType === 'invoice' 
                           ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-md ring-1 ring-black/5 dark:ring-white/10' 
                           : 'hover:text-slate-900 dark:hover:text-slate-200'
@@ -7580,7 +7610,7 @@ html, body, #root {
                     </button>
                     <button 
                       onClick={() => { setBillingDocType('estimate'); setEstimateQuickFilter('all'); }} 
-                      className={`px-5 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-bold uppercase tracking-wide transition-all ${
+                      className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-bold uppercase tracking-wide transition-all ${
                         billingDocType === 'estimate' 
                           ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-md ring-1 ring-black/5 dark:ring-white/10' 
                           : 'hover:text-slate-900 dark:hover:text-slate-200'
@@ -7592,12 +7622,12 @@ html, body, #root {
                   </div>
                 </div>
               </div>
-              <button onClick={() => handleOpenFAB('billing', billingDocType === 'estimate' ? 'estimate' : 'invoice')} className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all flex-shrink-0"><Plus size={20} className="sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
+              <button onClick={() => handleOpenFAB('billing', billingDocType === 'estimate' ? 'estimate' : 'invoice')} className="self-end sm:self-auto w-10 h-10 sm:w-12 sm:h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-500 transition-all flex-shrink-0"><Plus size={20} className="sm:w-6 sm:h-6" strokeWidth={2.5} /></button>
             </div>
             <PeriodSelector period={filterPeriod} setPeriod={setFilterPeriod} refDate={referenceDate} setRefDate={setReferenceDate} />
 
             {billingDocType === 'invoice' && (<>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={() => setInvoiceQuickFilter('all')}

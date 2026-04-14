@@ -1,0 +1,7 @@
+v27.0.42
+- Reworked iPhone width containment beyond the drawer-only pass.
+- Made mobile drawer full-screen and width-locked to the visual viewport.
+- Reset horizontal scroll on Apple mobile viewport changes.
+- Wrapped billing page header and invoice filters on iPhone.
+- Changed top billing tabs to full-width two-column layout on iPhone.
+- Reduced main page horizontal pressure with safer mobile padding and main-scroll width lock.
