@@ -1,7 +1,0 @@
-MONIEZI v27.0.26
-
-Changes:
-- strengthened visibility of the three circular header action buttons in both light and dark mode
-- matched the right-side header action button backgrounds more closely across themes
-- added a clearer border and stronger surface contrast so the circular button backgrounds read cleanly on the dark header
-- kept dark header/footer chrome behavior unchanged otherwise

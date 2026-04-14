@@ -1,6 +1,0 @@
-MONIEZI v27.0.36 - Quick Add dark typography exact light match
-
-Included in this version:
-- matched Quick Add dark-mode typography exactly to light-mode sizing, weight, tracking, and line-height
-- kept dark-mode colors/theme surfaces intact while using the same typography settings as light mode
-- left Quick Add light mode unchanged

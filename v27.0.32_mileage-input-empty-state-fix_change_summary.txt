@@ -1,8 +1,0 @@
-v27.0.32
-
-- fixed Mileage miles input so it allows an empty editing state
-- stopped auto-reinserting 0 while the user is backspacing
-- normalized draft miles on blur so leading zeroes are cleaned up after editing
-- applied the fix to both mileage entry surfaces
-- bumped package version to 27.0.32
-- bumped service worker cache version

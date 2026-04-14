@@ -1,8 +1,0 @@
-MONIEZI v27.0.28
-
-Changes:
-- Overview empty-state Add Transaction button now opens the same Quick Add selector as the header plus button
-- Strengthened Quick Add modal text contrast and tile readability in both light and dark mode
-- Increased tile border contrast and text weight for clearer scanning
-- Bumped package version to 27.0.28
-- Bumped service worker cache version

@@ -1,8 +1,0 @@
-MONIEZI v27.0.34
-
-What changed
-- reduced Quick Add description font weight slightly across all six action tiles
-- kept Quick Add tile titles strong so title/description hierarchy reads more clearly
-- preserved the brighter dark-mode tile titles and stronger contrast from recent Quick Add refinements
-- bumped package version to 27.0.34
-- bumped service worker cache version

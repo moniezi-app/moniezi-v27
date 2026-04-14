@@ -1,8 +1,0 @@
-MONIEZI v27.0.0
-
-Changes in this build:
-- Restyled the premium Profit & Loss PDF to align with the MONIEZI Tax Prep Package visual system
-- Added a premium branded header, metadata cards, summary KPI cards, and structured section cards for P&L exports
-- Kept accountant-grade detail while improving hierarchy, spacing, and branded footer treatment
-- Applied minor Tax Prep polish to timestamp/metadata wording and standardized footer separators
-- Bumped service worker cache version for clean refresh pickup

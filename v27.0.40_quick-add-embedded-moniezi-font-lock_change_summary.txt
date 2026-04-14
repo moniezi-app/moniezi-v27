@@ -1,4 +1,0 @@
-MONIEZI v27.0.40
-- Quick Add modal now forces the embedded MONIEZI app font in both light and dark modes.
-- Scoped Quick Add typography now wins over the global Inter/system fallback rule to keep the popup font family consistent across themes.
-- Added kerning/ligature normalization inside the Quick Add typography lock and bumped the cache version for a clean refresh after deploy.

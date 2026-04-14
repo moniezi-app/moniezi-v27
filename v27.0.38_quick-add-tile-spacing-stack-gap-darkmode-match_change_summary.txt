@@ -1,6 +1,0 @@
-MONIEZI v27.0.38
-
-- Replaced Quick Add tile description margin-top spacing with a locked text stack using explicit vertical gap.
-- Added qa-tile-copy wrapper so title and description spacing stays visually stable across light and dark mode.
-- Preserved the v27.0.37 typography lock for exact font family, weight, size, tracking, and line-height matching.
-- Bumped package version and service worker cache version for a clean refresh after deploy.

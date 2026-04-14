@@ -1,6 +1,0 @@
-MONIEZI v27.0.4
-
-- Fixed GitHub Actions install failure by changing CI from Node 24 to Node 20.
-- Removed npm cache setting from the workflow for a cleaner install path.
-- Bumped app version to 27.0.4.
-- Bumped service worker cache version to moniezi-core-v27-2026-04-09b.

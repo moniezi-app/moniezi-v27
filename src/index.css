@@ -10,13 +10,14 @@
 html, body {
   height: 100%;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* iOS safe-area fallback for older WebKit (constant() was the pre-standard name) */
@@ -32,8 +33,11 @@ html, body {
 /* Lock body scroll while modal/drawer is open (iOS needs position:fixed) */
 body.modal-open {
   position: fixed;
+  left: 0;
+  right: 0;
   width: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
   /* Preserve current scroll position (set via JS) */
   top: var(--scroll-top, 0px);
 }
@@ -42,7 +46,7 @@ body.modal-open {
 .modal-overlay {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   touch-action: pan-y;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -51,7 +55,7 @@ body.modal-open {
 /* Scrollable content inside modals */
 .modal-scroll-area {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }

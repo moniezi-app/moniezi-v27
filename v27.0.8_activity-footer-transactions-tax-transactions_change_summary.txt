@@ -1,6 +1,0 @@
-MONIEZI v27.0.8
-- changed footer label from Ledger to Activity
-- changed transactions page header from Ledger to Transactions
-- renamed tax prep export labels from Tax Ledger to Tax Transactions
-- updated spreadsheet title/file labels for Tax Transactions exports
-- refreshed service worker cache version

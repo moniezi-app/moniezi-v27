@@ -1,8 +1,0 @@
-MONIEZI v27.0.13
-
-Changes:
-- Changed light mode app background from blue-tinted slatebg to pure white
-- Strengthened light mode text contrast across slate text utilities
-- Increased light mode font weights for normal/medium/semibold/bold text
-- Slightly strengthened light mode borders and shadows so white surfaces stay separated
-- Left dark mode unchanged

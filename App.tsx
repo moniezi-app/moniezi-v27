@@ -1960,6 +1960,8 @@ export default function App() {
     scrollLockCountRef.current += 1;
     if (scrollLockCountRef.current === 1) {
       const scrollY = window.scrollY || window.pageYOffset || 0;
+      // Reset any phantom horizontal scroll before locking
+      window.scrollTo({ left: 0, top: scrollY, behavior: 'instant' as ScrollBehavior });
       document.body.style.setProperty('--scroll-top', `-${scrollY}px`);
       document.body.classList.add('modal-open');
     }
@@ -6359,7 +6361,7 @@ html.theme-light .dark-chrome .dark-chrome-nav-item.active { color: #ffffff !imp
 /* iPhone transaction drawer containment pass */
 html, body, #root {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 .moniezi-app-shell {
@@ -6367,7 +6369,7 @@ html, body, #root {
   max-width: 42rem;
   margin-left: auto;
   margin-right: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 .main-scroll-lock,
 .main-scroll-lock > div {
@@ -6382,7 +6384,7 @@ html, body, #root {
 }
 .drawer-scroll-area {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
 }
@@ -6404,13 +6406,7 @@ html, body, #root {
 .drawer-scroll-area button {
   max-width: 100%;
 }
-@supports (overflow: clip) {
-  .moniezi-app-shell,
-  .drawer-shell,
-  .drawer-scroll-area {
-    overflow-x: clip;
-  }
-}
+/* clip is used directly above — no @supports fallback needed */
 @media (max-width: 430px) {
   .moniezi-app-shell {
     width: 100%;
@@ -6461,7 +6457,7 @@ html, body, #root {
 }
 `}</style>
       <div
-        className="moniezi-app-shell flex flex-col w-full max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden transition-colors duration-300"
+        className="moniezi-app-shell flex flex-col w-full max-w-2xl mx-auto relative bg-slatebg dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300"
         style={{
           height: 'calc(var(--moniezi-app-vh, 1vh) * 100)',
           minHeight: 'calc(var(--moniezi-app-vh, 1vh) * 100)',

@@ -1,7 +1,0 @@
-MONIEZI v27.0.15
-- intensified light-mode contrast dramatically
-- pushed nearly all muted/gray text to near-black/deep navy in light mode
-- strengthened font weights for normal, medium, semibold, bold, and placeholders in light mode
-- darkened borders/dividers and strengthened shadows so white UI remains sharp
-- dark mode unchanged
-- bumped package version and service worker cache version
