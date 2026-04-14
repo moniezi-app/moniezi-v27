@@ -6425,9 +6425,8 @@ html, body, #root {
     padding-left: 1rem !important;
     padding-right: 1rem !important;
   }
-  .drawer-scroll-area input,
-  .drawer-scroll-area select,
-  .drawer-scroll-area textarea {
+  /* Prevent iOS Safari auto-zoom on input focus (triggers at <16px) */
+  input, select, textarea {
     font-size: 16px !important;
   }
   .mobile-billing-line-item {

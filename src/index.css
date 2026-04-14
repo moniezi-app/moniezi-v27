@@ -6,6 +6,13 @@
 /* Universal box-sizing (prevents padding from causing overflow) */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* Prevent iOS Safari auto-zoom on input focus (triggers at font-size <16px) */
+@media screen and (max-width: 430px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 /* Base styles */
 html, body {
   height: 100%;
